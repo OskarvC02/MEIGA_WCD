@@ -1,0 +1,17 @@
+--------------------------------------------------------------
+   =======================================================
+   MEIGA - Simulations Framework for Astroparticle Physics
+   =======================================================
+
+                       G4MuDecSimulator
+                       ----------------
+--------------------------------------------------------------
+
+Application created for the study of the muon decay 
+in a water-Cherenkov Detector
+
+This application is essentially the G4WCDSimulator with some modifications in the UserAction classes to store the
+signals from electrons product of the muon decay in the water.
+
+This Application was used to perform the analysis published in
+https://doi.org/10.1016/j.nima.2023.168567

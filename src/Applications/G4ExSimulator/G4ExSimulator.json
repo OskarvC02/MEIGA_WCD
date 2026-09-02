@@ -1,0 +1,28 @@
+{
+	"Input" :
+	{
+		"Mode" : "UseARTI",
+		"InputFileName" : "../../../src/Documentation/SampleFlux/vertical_muon.txt"
+	},
+	"Output" : 
+	{
+		"OutputFile" : "./output.json",
+		"CompressOutput" : true,
+		"SaveInput" : true,
+		"SaveEnergy" : true,
+		"SaveCounts" : false,
+		"SavePETimeDistribution" : false,
+		"SaveCharge" : false
+	},
+	"DetectorList" : "./DetectorList.xml",
+	"Simulation" :
+	{
+		"SimulationMode" : "eFull",
+		"GeoVisOn" : true,
+		"TrajVisOn" : true,
+		"CheckOverlaps" : false,
+		"Verbosity" : 1,
+		"RenderFile" : "VRML2FILE",
+		"PhysicsName" : "QGSP_BERT_HP"
+	}
+}

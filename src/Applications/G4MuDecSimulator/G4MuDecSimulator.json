@@ -1,0 +1,28 @@
+{
+	"Input" :
+	{
+		"Mode" : "UseARTI",
+		"InputFileName" : "../../../src/Documentation/SampleFlux/salida_bga_30.shw"
+	},
+	
+	"Output" : 
+	{
+		"OutputFile" : "./output.json",
+		"CompressOutput" : true,
+		"SaveInput" : true,
+		"SaveComponentsPETimeDistribution" : true,
+		"SaveEnergy" : true
+	},
+	"DetectorList" : "./DetectorList.xml",
+	"Simulation" :
+	{
+		"SimulationMode" : "eFast",
+		"InjectionMode" : "eRandom",
+		"GeoVisOn" : false,
+		"TrajVisOn" : false,
+		"CheckOverlaps" : false,
+		"Verbosity" : 1,
+		"RenderFile" : "VRML2FILE",
+		"PhysicsName" : "QGSP_BERT_HP"
+	}
+}
