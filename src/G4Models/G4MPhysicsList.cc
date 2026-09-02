@@ -62,7 +62,7 @@ G4MPhysicsList::G4MPhysicsList(G4String physName) : G4VModularPhysicsList()
 	}
 
 	fAbsorptionOn = true;
-	RegisterPhysics(new ExtraPhysics());
+	// RegisterPhysics(new ExtraPhysics());
 	RegisterPhysics(fOpticalPhysics = new OpticalPhysics(fAbsorptionOn));
 	RegisterPhysics(new G4RadioactiveDecayPhysics());
 
