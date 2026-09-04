@@ -17,6 +17,25 @@ G4WCDConstruction::G4WCDConstruction(Event& theEvent) :
 	cout << "...G4WCDConstruction..." << endl;
 	fCheckOverlaps = fEvent.GetConfig().fCheckOverlaps;
 
+	//  NEW:v3 Read ground size from Event (populated from DetectorList.xml)
+	fGroundSizeX = fEvent.GetDetector(0).GetGroundSizeX(); // Units are already read from DetectorList.xml
+	fGroundSizeY = fEvent.GetDetector(0).GetGroundSizeY();
+	fGroundSizeZ = fEvent.GetDetector(0).GetGroundSizeZ();
+
+	// NEW:v3 Compute world size based on ground size
+	// fixed height 200m, no extra 50cm margin at side
+	fWorldSizeX = fGroundSizeX;
+	fWorldSizeY = fGroundSizeY;
+	fWorldSizeZ = 200 * CLHEP::m;
+
+	// NEW:v3 Debug outputs
+	G4cout << "[DEBUG] GroundSizeX = " << fGroundSizeX / CLHEP::m << " m" << G4endl;
+	G4cout << "[DEBUG] GroundSizeY = " << fGroundSizeY / CLHEP::m << " m" << G4endl;
+	G4cout << "[DEBUG] GroundSizeZ = " << fGroundSizeZ / CLHEP::m << " m" << G4endl;
+
+	G4cout << "[DEBUG] WorldSizeX = " << fWorldSizeX / CLHEP::m << " m" << G4endl;
+	G4cout << "[DEBUG] WorldSizeY = " << fWorldSizeY / CLHEP::m << " m" << G4endl;
+	G4cout << "[DEBUG] WorldSizeZ = " << fWorldSizeZ / CLHEP::m << " m" << G4endl;
 }
 
 G4WCDConstruction::~G4WCDConstruction() 
@@ -28,7 +47,10 @@ G4WCDConstruction::CreateDetector()
 {
 
 	CreateWorld();
-	//CreateGround();
+	// NEW:v3 Disable Ground by setting volume = 0
+	if (fGroundSizeX > 1e-9 && fGroundSizeY > 1e-9 && fGroundSizeZ > 1e-9){
+			CreateGround(); // NEW:v3 add ground
+	}
 	PlaceDetector(fEvent);
 	return physWorld;
 }

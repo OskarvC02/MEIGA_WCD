@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #ifndef Materials_h
 #define Materials_h 1
 
@@ -42,6 +43,12 @@ public:
         // static G4Element* elNi;// declarando elemento Ni
 	//static G4Element* elMo;// declarando elemento Mo
 	//static G4Element* elV;// declarando Vanadio
+
+	//NEW:v3 Elements for DrySoil
+	static G4Element* elP;
+	static G4Element* elS;
+	static G4Element* elK;
+	static G4Element* elMg;
 
 	// compounds
 	static G4Material* SiO2;
@@ -94,6 +101,9 @@ public:
 	static G4Material* LechoFijo_40porciento;// declarando materiales para modelamiento de Lecho fijo			      
 	static G4Material* LechoFijo_60porciento;// declarando materiales para modelamiento de Lecho fijo			      
         static G4Material* LechoFijo_74porciento;// declarando materiales para modelamiento de Lecho fijo
+
+	static G4Material* DrySoil; //NEW:v3 Dry soil for ground albedo
+
 	static G4OpticalSurface* ScinOptSurf;
 	static G4OpticalSurface* LinerOptSurf;
 	static G4OpticalSurface* LinerOptSurf2;

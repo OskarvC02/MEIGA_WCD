@@ -278,7 +278,11 @@ G4Element* Materials::elPb;
 G4Element* Materials::elCl;
 G4Element* Materials::elMn;//ruta agregada para el Manganeso - componente del acero
 
-
+// NEW:v3 Elements for DrySoil
+G4Element* Materials::elP;
+G4Element* Materials::elS;
+G4Element* Materials::elMg;
+G4Element* Materials::elK;
 
 G4Material* Materials::SiO2;
 G4Material* Materials::TiO2;
@@ -332,6 +336,9 @@ G4Material* Materials::Lead;
 G4Material* Materials::Iron;
 G4Material* Materials::Oil;
 G4Material* Materials::Alum;
+
+G4Material* Materials::DrySoil; // NEW:v3 Soil with arxiv.org/html/2601.17595v1 composition
+
 G4OpticalSurface* Materials::ScinOptSurf;
 G4OpticalSurface* Materials::LinerOptSurf;
 G4OpticalSurface* Materials::LinerOptSurf2;
@@ -396,6 +403,12 @@ Materials::CreateElements()
 	//elMo = new G4Element("Molibdeno", "Mo", 42, 95.95 * g/mole);// definiendo Mo - componente de catalizador
 	//elNi = new G4Element("Niquel", "Ni", 28, 58.693 * g/mole);// definiendo Ni - componente de catalizador
 	//elV = new G4Element("Vanadio", "V", 23,50.94  * g/mole); // definiendo V - componente de catalizador contaminado
+
+	//NEW:v3 Elements for DrySoil
+	elP = new G4Element("Phosphorus", "P", 15, 30.974 * g/mole);
+	elS  = new G4Element("Sulfurus", "S", 16, 32.06 * g/mole);
+	elK  = new G4Element("Potassium", "K", 19, 39.098 * g/mole);
+	elMg = new G4Element("Magnesium", "Mg", 12, 24.305 * g/mole);
 }
 
 void
@@ -513,6 +526,23 @@ Materials::CreateMaterials()
 	// Rocks
 	// --------------------------------------------------------------------
 	StdRock = SiO2;
+
+	// NEW:v3 Chemical Composition Dry Colombian Soil
+	DrySoil = new G4Material("DrySoil", 2.7 *g/cm3, 14);
+	DrySoil->AddElement(elO, 0.49);
+	DrySoil->AddElement(elSi, 0.33);
+	DrySoil->AddElement(elAl, 0.0713);
+	DrySoil->AddElement(elFe, 0.038);
+	DrySoil->AddElement(elC, 0.02);
+	DrySoil->AddElement(elMg, 0.006);
+	DrySoil->AddElement(elTi, 0.0046);
+	DrySoil->AddElement(elH, 0.0038);
+	DrySoil->AddElement(elN, 0.001);
+	DrySoil->AddElement(elS, 0.0008);
+	DrySoil->AddElement(elCa, 0.0137);
+	DrySoil->AddElement(elK, 0.0136);
+	DrySoil->AddElement(elP, 0.0009);
+	DrySoil->AddElement(elNa, 0.0063);
 
 	// --------------------------------------------------------------------
 	// Plastic Scintillator Bars

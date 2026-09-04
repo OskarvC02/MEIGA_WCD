@@ -61,14 +61,15 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		G4PVPlacement*   physGround  = nullptr;
 
 		// size definitions
+		// NEW:v3 new defaults
 		
-		G4double fGroundSizeX = 5 * CLHEP::m;
-		G4double fGroundSizeY = 5 * CLHEP::m;
+		G4double fGroundSizeX = 400 * CLHEP::m;
+		G4double fGroundSizeY = 400 * CLHEP::m;
 		G4double fGroundSizeZ = 1 * CLHEP::m;
 
-		G4double fWorldSizeX = fGroundSizeX + 0.5 * CLHEP::m;
-		G4double fWorldSizeY = fGroundSizeY + 0.5 * CLHEP::m;
-		G4double fWorldSizeZ = fGroundSizeZ + 5 * CLHEP::m;
+		G4double fWorldSizeX = fGroundSizeX;
+		G4double fWorldSizeY = fGroundSizeY;
+		G4double fWorldSizeZ = 200 * CLHEP::m;
 
 		Event& fEvent;
 };
