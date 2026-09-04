@@ -500,7 +500,7 @@ Materials::CreateMaterials()
 	// --------------------------------------------------------------------
 	// Water
 	// --------------------------------------------------------------------
-	Water = new G4Material("Water", 1.45 * g/cm3, 2);
+	Water = new G4Material("Water", 1 * g/cm3, 2); // Important Bugfix, Water has not density 1.45 g/cm3
 	Water->AddElement(elH, 2);
 	Water->AddElement(elO, 1);
 
