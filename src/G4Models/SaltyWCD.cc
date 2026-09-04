@@ -148,11 +148,12 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 		detector.SetLogicalVolume("logTank", logTank);
 
 	// NEW:v1 new top, bottom and side walls of the tank are identical to WCD.cc
-	logTop  = new G4LogicalVolume(solidTop, Materials().HDPE, "logTop", 0, 0, 0);
+	// NEW:v2 tank made of stainless steel instead of HDPE
+	logTop  = new G4LogicalVolume(solidTop, StainlessSteel, "logTop", 0, 0, 0);
 	physTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logTop, "physTop", logMother, false, 0, fCheckOVerlaps);
-	new G4LogicalVolume(solidBot, Materials().HDPE, "logBot", 0, 0, 0);
+	new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
 	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
-	logSide  = new G4LogicalVolume(solidSide, Materials().HDPE, "logSide", 0, 0, 0);
+	logSide  = new G4LogicalVolume(solidSide, StainlessSteel, "logSide", 0, 0, 0);
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 
 	// top, bottom and side walls of the tank (old)

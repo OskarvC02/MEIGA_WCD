@@ -5,6 +5,8 @@
 #include "G4MDetectorAction.h"
 #include "G4MPMTAction.h"
 
+// NEW:v2 import NIST for StainlessSteel Material
+#include "G4NistManager.hh"
 
 #include "G4VisAttributes.hh"
 #include "G4Colour.hh"
@@ -55,6 +57,10 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	G4double fTankPosY = detectorPos.getY();
 	G4double fTankPosZ = detectorPos.getZ();
 	
+	// NEW:v2 Material StainlessSteel (copy of SaltyWCD.cc)
+	G4NistManager* nist = G4NistManager::Instance();
+	G4Material* StainlessSteel = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+
 	// define PMT position as the center of the tank
 	G4ThreeVector fTankCenter = detectorPos + G4ThreeVector(0, 0, fTankHalfHeight + fTankThickness);
 	int detectorId = detector.GetId();
@@ -102,11 +108,12 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 		detector.SetLogicalVolume("logTank", logTank);
 	
 	// top, bottom and side walls of the tank
-	logTop  = new G4LogicalVolume(solidTop, Materials().HDPE, "logTop", 0, 0, 0);
+	// NEW:v2 tank made of stainless steel instead of HDPE
+	logTop  = new G4LogicalVolume(solidTop, StainlessSteel, "logTop", 0, 0, 0);
 	physTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logTop, "physTop", logMother, false, 0, fCheckOVerlaps);
-	new G4LogicalVolume(solidBot, Materials().HDPE, "logBot", 0, 0, 0);
+	new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
 	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
-	logSide  = new G4LogicalVolume(solidSide, Materials().HDPE, "logSide", 0, 0, 0);
+	logSide  = new G4LogicalVolume(solidSide, StainlessSteel, "logSide", 0, 0, 0);
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 
 	// tank liner surface
