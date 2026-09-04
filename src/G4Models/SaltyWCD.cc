@@ -18,8 +18,9 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 
 	
 	// solids
-	G4Tubs* solidCasingTop = nullptr;
-	G4Tubs* solidCasingSide = nullptr;
+	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
+	//G4Tubs* solidCasingTop = nullptr;
+	//G4Tubs* solidCasingSide = nullptr;
 
 	G4Tubs* solidTank = nullptr;
 	G4Tubs* solidTop  = nullptr;
@@ -30,9 +31,10 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4Ellipsoid* solidPMT = nullptr;
 
 	// logical volumes
-	G4LogicalVolume* logCasingTop = nullptr;
-	G4LogicalVolume* logCasingBot = nullptr;
-	G4LogicalVolume* logCasingSide = nullptr;
+	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
+	//G4LogicalVolume* logCasingTop = nullptr;
+	//G4LogicalVolume* logCasingBot = nullptr;
+	//G4LogicalVolume* logCasingSide = nullptr;
 
 	G4LogicalVolume* logTank = nullptr;
 	G4LogicalVolume* logTop  = nullptr;
@@ -42,9 +44,10 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4LogicalVolume* logPMT = nullptr;
 
 	// physical volumes
-	G4PVPlacement* physCasingBot = nullptr;
-	G4PVPlacement* physCasingTop = nullptr;
-	G4PVPlacement* physCasingSide = nullptr;
+	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
+	//G4PVPlacement* physCasingBot = nullptr;
+	//G4PVPlacement* physCasingTop = nullptr;
+	//G4PVPlacement* physCasingSide = nullptr;
 
 	G4PVPlacement* physTank = nullptr;
 	G4PVPlacement* physBot  = nullptr;
@@ -109,8 +112,10 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 		and its response is computed by the G4MPMTAction class.
 
 	****************************************************************/
-	solidCasingTop = new G4Tubs("CasingTop", 0, fTankRadius + fTankThickness, fTankThickness/2, 0, 360*deg);
-	solidCasingSide = new G4Tubs("CasingSide", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight, 0, 360*deg);
+	
+	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
+	//solidCasingTop = new G4Tubs("CasingTop", 0, fTankRadius + fTankThickness, fTankThickness/2, 0, 360*deg);
+	//solidCasingSide = new G4Tubs("CasingSide", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight, 0, 360*deg);
 
 	solidTank = new G4Tubs("Tank", 0, fTankRadius, fTankHalfHeight, 0, 360*deg);
 	solidTop = new G4Tubs("Top", 0, fTankRadius, fTankThickness/2, 0, 360*deg);
@@ -123,14 +128,16 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4SDManager* const sdMan = G4SDManager::GetSDMpointer();
 
 	// tank casing are made of Stainless-steel
-	logCasingTop = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingTop", 0, 0, 0);
-	physCasingTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logCasingTop, "physCasingTop", logMother, false, 0, fCheckOVerlaps);
-	
-	logCasingBot = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingBot", 0, 0, 0);
-	physCasingBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logCasingBot, "physCasingBot", logMother, false, 0);
+	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
 
-	logCasingSide = new G4LogicalVolume(solidCasingSide, StainlessSteel, "logCasingSide", 0, 0, 0);
-	physCasingSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logCasingSide, "physCasingSide", logMother, false, 0, fCheckOVerlaps);
+	// logCasingTop = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingTop", 0, 0, 0);
+	// physCasingTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logCasingTop, "physCasingTop", logMother, false, 0, fCheckOVerlaps);
+	
+	// logCasingBot = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingBot", 0, 0, 0);
+	// physCasingBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logCasingBot, "physCasingBot", logMother, false, 0);
+
+	// logCasingSide = new G4LogicalVolume(solidCasingSide, StainlessSteel, "logCasingSide", 0, 0, 0);
+	// physCasingSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logCasingSide, "physCasingSide", logMother, false, 0, fCheckOVerlaps);
 
 
 	// water part
@@ -140,15 +147,23 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	if (!detector.HasLogicalVolume("logTank"))
 		detector.SetLogicalVolume("logTank", logTank);
 
-	// top, bottom and side walls of the tank
+	// NEW:v1 new top, bottom and side walls of the tank are identical to WCD.cc
 	logTop  = new G4LogicalVolume(solidTop, Materials().HDPE, "logTop", 0, 0, 0);
-	physTop = new G4PVPlacement(nullptr, G4ThreeVector(), logTop, "physTop", logCasingTop, false, 0, fCheckOVerlaps);
-	
-	logBot = new G4LogicalVolume(solidTop, Materials().HDPE, "logBot", 0, 0, 0);
-	physBot = new G4PVPlacement(nullptr, G4ThreeVector(), logBot, "physBot", logCasingBot, false, 0, fCheckOVerlaps);
-	
+	physTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logTop, "physTop", logMother, false, 0, fCheckOVerlaps);
+	new G4LogicalVolume(solidBot, Materials().HDPE, "logBot", 0, 0, 0);
+	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
 	logSide  = new G4LogicalVolume(solidSide, Materials().HDPE, "logSide", 0, 0, 0);
-	physSide = new G4PVPlacement(nullptr, G4ThreeVector(), logSide, "physSide", logCasingSide, false, 0, fCheckOVerlaps);
+	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
+
+	// top, bottom and side walls of the tank (old)
+	// logTop  = new G4LogicalVolume(solidTop, Materials().HDPE, "logTop", 0, 0, 0);
+	// physTop = new G4PVPlacement(nullptr, G4ThreeVector(), logTop, "physTop", logCasingTop, false, 0, fCheckOVerlaps);
+	
+	// logBot = new G4LogicalVolume(solidTop, Materials().HDPE, "logBot", 0, 0, 0);
+	// physBot = new G4PVPlacement(nullptr, G4ThreeVector(), logBot, "physBot", logCasingBot, false, 0, fCheckOVerlaps);
+	
+	// logSide  = new G4LogicalVolume(solidSide, Materials().HDPE, "logSide", 0, 0, 0);
+	// physSide = new G4PVPlacement(nullptr, G4ThreeVector(), logSide, "physSide", logCasingSide, false, 0, fCheckOVerlaps);
 
 	// tank liner surface
 	new G4LogicalBorderSurface("TopSurface", physTank, physTop, Materials().LinerOptSurf);
