@@ -52,18 +52,22 @@ G4WCDConstruction::CreateDetector()
 			CreateGround(); // NEW:v3 add ground
 	}
 	PlaceDetector(fEvent);
-	return physWorld;
+	return physUniverse;
 }
 
 void
 G4WCDConstruction::CreateWorld()
 {
+	// NEW:v4 Universe (larger, top-level), mother Volume of world
+	solidUniverse   = new G4Box("Universe", fWorldSizeX/2 + fUniverseMargin, fWorldSizeY/2 + fUniverseMargin, fWorldSizeZ/2);
+	logicUniverse   = new G4LogicalVolume(solidUniverse, Materials().Air, "Universe");
+	physUniverse    = new G4PVPlacement(nullptr, G4ThreeVector(), logicUniverse,  "Universe",
+										0, false, 0, fCheckOverlaps);
 
-
-	solidWorld 	= new G4Box("World", fWorldSizeX/2, fWorldSizeY/2, fWorldSizeZ/2);
-	logicWorld = new G4LogicalVolume(solidWorld, Materials().Air, "World");
-	physWorld	 =  new G4PVPlacement(nullptr, G4ThreeVector(), "World", logicWorld, 0, false, 0, fCheckOverlaps);
-
+	// World (smaller, daughter of universe)
+	solidWorld      = new G4Box("World", fWorldSizeX/2, fWorldSizeY/2, fWorldSizeZ/2);
+	logicWorld      = new G4LogicalVolume(solidWorld, Materials().Air, "World");
+	physWorld       = new G4PVPlacement(nullptr, G4ThreeVector(), logicWorld, "World", logicUniverse, false, 0, fCheckOverlaps);
 }
 
 void
@@ -95,9 +99,9 @@ G4VPhysicalVolume*
 G4WCDConstruction::Construct() 
 {
 
-	if (!physWorld) {
+	if (!physUniverse) {
 		return CreateDetector();
 	}
-	return physWorld;
+	return physUniverse; // NEW:v4 replace world by universe
 
 }

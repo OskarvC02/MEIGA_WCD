@@ -103,6 +103,7 @@ public:
         static G4Material* LechoFijo_74porciento;// declarando materiales para modelamiento de Lecho fijo
 
 	static G4Material* DrySoil; //NEW:v3 Dry soil for ground albedo
+	static G4Material* Vacuum;  //NEW:v4 For universe Box
 
 	static G4OpticalSurface* ScinOptSurf;
 	static G4OpticalSurface* LinerOptSurf;

@@ -338,6 +338,7 @@ G4Material* Materials::Oil;
 G4Material* Materials::Alum;
 
 G4Material* Materials::DrySoil; // NEW:v3 Soil with arxiv.org/html/2601.17595v1 composition
+G4Material* Materials::Vacuum;  // NEW:v4 For the universe Box
 
 G4OpticalSurface* Materials::ScinOptSurf;
 G4OpticalSurface* Materials::LinerOptSurf;
@@ -482,6 +483,9 @@ Materials::CreateCompounds()
 void
 Materials::CreateMaterials()
 {
+	// NEW:v4 Vacuum for the universe box
+	Vacuum = new G4Material("Vacuum", 1e-25 * g/cm3, 1);
+	Vacuum->AddElement(elH, 1); // Dummy element
 
 	// --------------------------------------------------------------------
 	// Air

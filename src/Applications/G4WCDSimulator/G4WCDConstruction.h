@@ -40,6 +40,12 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		G4double GetGroundSizeY() const { return fGroundSizeY; }
 		G4double GetGroundSizeZ() const { return fGroundSizeZ; }
 
+		// NEW:v4 getter methods to be used in WCDSteppingAction
+		G4double GetWorldSizeX() const { return fWorldSizeX; }
+		G4double GetWorldSizeY() const { return fWorldSizeY; }
+		G4double GetWorldSizeZ() const { return fWorldSizeZ; }
+
+
 	private:
 		
 		void CreateWorld();
@@ -52,6 +58,7 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		// solids
 		G4Box* solidWorld = nullptr;
 		G4Box* solidGround = nullptr;
+		G4Box* solidUniverse = nullptr; // NEW:v4
 		
 		// logical and physical volumes
 		G4LogicalVolume* logicWorld = nullptr;
@@ -59,6 +66,10 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		
 		G4LogicalVolume* logicGround = nullptr;
 		G4PVPlacement*   physGround  = nullptr;
+
+		// NEW:v4
+		G4LogicalVolume* logicUniverse = nullptr;
+		G4PVPlacement*   physUniverse = nullptr;
 
 		// size definitions
 		// NEW:v3 new defaults
@@ -70,6 +81,9 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		G4double fWorldSizeX = fGroundSizeX;
 		G4double fWorldSizeY = fGroundSizeY;
 		G4double fWorldSizeZ = 200 * CLHEP::m;
+
+		// NEW:v3 Margin between universe and world
+		G4double fUniverseMargin = 20 * CLHEP::m;
 
 		Event& fEvent;
 };
