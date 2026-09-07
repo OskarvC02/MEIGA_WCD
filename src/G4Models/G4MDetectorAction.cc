@@ -54,10 +54,11 @@ G4MDetectorAction::ProcessHits(G4Step* const step, G4TouchableHistory* const /*r
 	auto trackId = track->GetTrackID();
 	//cout << "[DEBUG] G4Models::G4MDetectorAction: of track " << trackId << endl;
 	// get energy deposit of primaries
-	if (trackId == 1) {
+	// NEW:v5 remove condition to count all Energy deposits
+	//if (trackId == 1) {
 
 		fEdep += step->GetTotalEnergyDeposit();
-	}
+	//}
 
 	return true;
 }
