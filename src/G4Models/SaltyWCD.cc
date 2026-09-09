@@ -60,6 +60,16 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4double fTankHalfHeight = 0.5 * fTankHeight;
 	G4double fTankThickness = detector.GetTankThickness();
 	G4double fNaClFracMass = detector.GetImpuritiesFraction();
+
+	// NEW:v6 Lead Shield
+	G4double fShieldRadius = detector.GetShieldRadius();
+	G4double fShieldThickness = detector.GetShieldThickness();
+	G4double fShieldHalfThickness = 0.5 * fShieldThickness;
+
+	// NEW:v6 Lead shielding
+	G4Tubs* solidShield = nullptr;
+	G4LogicalVolume* logShield = nullptr;
+	G4PVPlacement* physShield = nullptr;
 	// --------------------------------------------------------------------
 	// SaltyWater defined here for this particular detector
 	// --------------------------------------------------------------------
@@ -96,6 +106,8 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	cout << "Tank Radius = " << fTankRadius / CLHEP::cm << " cm " << endl;
 	cout << "Tank Height = " << fTankHeight / CLHEP::cm << " cm " << endl;
 	cout << "Fraction of Water Impurities = " << fNaClFracMass << endl;
+	cout << "Lead Shield Thickness = " << fShieldThickness / CLHEP::cm << " cm " << endl;
+	cout << "Lead Shield Radius = " << fShieldRadius / CLHEP::cm << " cm " << endl; 
 	/****************************************************************
 		
 		Geant4 Volume construction
@@ -155,6 +167,13 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
 	logSide  = new G4LogicalVolume(solidSide, StainlessSteel, "logSide", 0, 0, 0);
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
+
+	// NEW:v6 optional lead shielding
+	if (fShieldRadius > 1e9 && fShieldThickness > 1e9){
+		solidShield = new G4Tubs("Shield", 0, fShieldRadius, fShieldHalfThickness, 0, 360*deg);
+		logShield = new G4LogicalVolume(solidShield, Materials().Lead, "logShield", 0, 0, 0);
+		physShield = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 2*fTankThickness + fShieldHalfThickness), logShield, "physShield", logMother, false, 0, fCheckOVerlaps);
+	}
 
 	// top, bottom and side walls of the tank (old)
 	// logTop  = new G4LogicalVolume(solidTop, Materials().HDPE, "logTop", 0, 0, 0);

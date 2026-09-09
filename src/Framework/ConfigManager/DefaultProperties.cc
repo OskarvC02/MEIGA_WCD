@@ -49,4 +49,8 @@ DefaultProperties::SetDefaultProperties()
 	gGroundSizeY = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "groundSizeY");
 	gGroundSizeZ = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "groundSizeZ");
 
+	// NEW:v6 lead Shield
+	gShieldRadius = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "shieldRadius");
+	gShieldThickness = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "shieldThickness");
+
 }

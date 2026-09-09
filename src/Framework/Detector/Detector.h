@@ -133,6 +133,13 @@ class Detector
 		double GetGroundSizeZ() const { return fGroundZ; }
 		void SetGroundSizeZ(double gz) { fGroundZ = gz; }
 
+		// NEW:v6 Lead Shield
+		double GetShieldRadius() const { return fShieldRadius; }
+		void SetShieldRadius(double r) { fShieldRadius = r; }
+
+		double GetShieldThickness() const { return fShieldThickness; }
+		void SetShieldThickness(double t) { fShieldThickness = t; }
+
 		// Optical device
 		//OptDevice& GetOptDevice() { return fOptDevice; } // to access OptDevice class members
 		// Make, Get and Has optical device by its id
@@ -192,6 +199,10 @@ class Detector
 		double fGroundX;
 		double fGroundY;
 		double fGroundZ;
+
+		// NEW:v6 Lead Shield
+		double fShieldThickness;
+		double fShieldRadius;
 
 		std::vector<double> fDetectorPosition;
 		OptDevice fOptDevice;

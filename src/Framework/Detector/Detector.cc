@@ -166,6 +166,10 @@ Detector::SetDetectorProperties(const ptree &tree, DefaultProperties &defProp)
 	SetGroundSizeY(defProp.gGroundSizeY);
 	SetGroundSizeZ(defProp.gGroundSizeZ);
 
+	// NEW:v6
+	SetShieldRadius(defProp.gShieldRadius);
+	SetShieldThickness(defProp.gShieldThickness);
+
 	/*
 		Now that the default properties are set, look for a property
 		in the DetectorList.xml and override in case of exist. 
@@ -282,6 +286,16 @@ Detector::SetDetectorProperties(const ptree &tree, DefaultProperties &defProp)
 				double value = stod(xmlValue);
 				double unit = G4UnitDefinition::GetValueOf(v.second.get<string>("<xmlattr>.unit"));
 				SetGroundSizeZ(value * unit);
+			}
+			else if (xmlLabel == "shieldRadius") {
+				double value = stod(xmlValue);
+				double unit = G4UnitDefinition::GetValueOf(v.second.get<string>("<xmlattr>.unit"));
+				SetShieldRadius(value * unit);
+			}
+			else if (xmlLabel == "shieldThickness") {
+				double value = stod(xmlValue);
+				double unit = G4UnitDefinition::GetValueOf(v.second.get<string>("<xmlattr>.unit"));
+				SetShieldThickness(value * unit);
 			}
 		}
 	}
