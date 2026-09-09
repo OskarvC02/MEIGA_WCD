@@ -130,7 +130,7 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	//solidCasingSide = new G4Tubs("CasingSide", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight, 0, 360*deg);
 
 	solidTank = new G4Tubs("Tank", 0, fTankRadius, fTankHalfHeight, 0, 360*deg);
-	solidTop = new G4Tubs("Top", 0, fTankRadius, fTankThickness/2, 0, 360*deg);
+	solidTop = new G4Tubs("Top", 0, fTankRadius + fTankThickness, fTankThickness/2, 0, 360*deg);
 	solidSide = new G4Tubs("Side", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight, 0, 360*deg);
 
 	// pmt solids 
