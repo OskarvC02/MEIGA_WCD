@@ -47,14 +47,18 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	G4double fTankThickness = detector.GetTankThickness();
 	
 	// NEW:v6 Lead Shield
-	G4double fShieldRadius = detector.GetShieldRadius();
+	//G4double fShieldRadius = detector.GetShieldRadius();
 	G4double fShieldThickness = detector.GetShieldThickness();
 	G4double fShieldHalfThickness = 0.5 * fShieldThickness;
 
 	// NEW:v6 Lead shielding
-	G4Tubs* solidShield = nullptr;
-	G4LogicalVolume* logShield = nullptr;
-	G4PVPlacement* physShield = nullptr;
+	G4Tubs* solidShieldTop = nullptr;
+	G4LogicalVolume* logShieldTop = nullptr;
+	G4PVPlacement* physShieldTop = nullptr;
+	// NEW:v7 Shielding Sides and Top
+	G4Tubs* solidShieldSide = nullptr;
+	G4LogicalVolume* logShieldSide = nullptr;
+	G4PVPlacement* physShieldSide = nullptr;
 
 	// PMT properties photonis-XP1805
 	OptDevice pmt = detector.GetOptDevice(OptDevice::ePMT);
@@ -85,7 +89,7 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	cout << "Tank Radius = " << fTankRadius / CLHEP::cm << " cm " << endl;
 	cout << "Tank Height = " << fTankHeight / CLHEP::cm << " cm " << endl;
 	cout << "Lead Shield Thickness = " << fShieldThickness / CLHEP::cm << " cm " << endl;
-	cout << "Lead Shield Radius = " << fShieldRadius / CLHEP::cm << " cm " << endl; 
+	//cout << "Lead Shield Radius = " << fShieldRadius / CLHEP::cm << " cm " << endl; 
 	/****************************************************************
 		
 		Geant4 Volume construction
@@ -129,10 +133,15 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 
 	// NEW:v6 optional lead shielding
-	if (fShieldRadius > 1e9 && fShieldThickness > 1e9){
-		solidShield = new G4Tubs("Shield", 0, fShieldRadius, fShieldHalfThickness, 0, 360*deg);
-		logShield = new G4LogicalVolume(solidShield, Materials().Lead, "logShield", 0, 0, 0);
-		physShield = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 2*fTankThickness + fShieldHalfThickness), logShield, "physShield", logMother, false, 0, fCheckOVerlaps);
+	if (fShieldThickness > 1e9){
+		solidShieldTop = new G4Tubs("ShieldTop", 0, fTankRadius + fTankThickness + fShieldThickness, fShieldHalfThickness, 0, 360*deg);
+		logShieldTop = new G4LogicalVolume(solidShieldTop, Materials().Lead, "logShieldTop", 0, 0, 0);
+		physShieldTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHeight + 2*fTankThickness + fShieldHalfThickness), logShieldTop, "physShield", logMother, false, 0, fCheckOVerlaps);
+
+		//NEW:v7 shielding sides and top
+		solidShieldSide = new G4Tubs("ShieldSide", fTankRadius + fTankThickness, fTankRadius + fTankThickness + fShieldThickness, fTankHalfHeight + fTankThickness, 0, 360*deg);
+		logShieldSide = new G4LogicalVolume(solidShieldSide, Materials().Lead, "logShieldSide", 0, 0, 0);
+		physShieldSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logShieldSide, "physShield", logMother, false, 0, fCheckOVerlaps);
 	}
 
 	// tank liner surface

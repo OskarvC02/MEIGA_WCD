@@ -25,7 +25,6 @@
 			<groundSizeY unit="m"> 400 </groundSizeY>
 			<groundSizeZ unit="m"> 1 </groundSizeZ>
 
-			<shieldRadius unit="cm"> 56.4 </shieldRadius>
 			<shieldThickness unit="cm"> 0 </shieldThickness> 
         </detector>
 
