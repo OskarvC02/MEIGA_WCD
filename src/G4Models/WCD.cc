@@ -133,7 +133,7 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 
 	// NEW:v6 optional lead shielding
-	if (fShieldThickness > 1e9){
+	if (fShieldThickness > 1e-9){
 		solidShieldTop = new G4Tubs("ShieldTop", 0, fTankRadius + fTankThickness + fShieldThickness, fShieldHalfThickness, 0, 360*deg);
 		logShieldTop = new G4LogicalVolume(solidShieldTop, Materials().Lead, "logShieldTop", 0, 0, 0);
 		physShieldTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHeight + 2*fTankThickness + fShieldHalfThickness), logShieldTop, "physShield", logMother, false, 0, fCheckOVerlaps);
