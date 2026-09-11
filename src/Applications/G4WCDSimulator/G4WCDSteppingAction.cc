@@ -4,6 +4,8 @@
 #include "G4WCDConstruction.h"
 #include "G4WCDEventAction.h"
 #include "G4WCDTrackingAction.h"
+#include "G4TransportationManager.hh"
+#include "G4Navigator.hh"
 
 #include "G4Step.hh"
 #include "G4Track.hh"
