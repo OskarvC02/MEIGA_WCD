@@ -44,11 +44,6 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4LogicalVolume* logPMT = nullptr;
 
 	// physical volumes
-	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
-	//G4PVPlacement* physCasingBot = nullptr;
-	//G4PVPlacement* physCasingTop = nullptr;
-	//G4PVPlacement* physCasingSide = nullptr;
-
 	G4PVPlacement* physTank = nullptr;
 	G4PVPlacement* physBot  = nullptr;
 	G4PVPlacement* physTop  = nullptr;
