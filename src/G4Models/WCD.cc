@@ -109,6 +109,7 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 
 	solidTank = new G4Tubs("Tank", 0, fTankRadius, fTankHalfHeight, 0, 360*deg);
 	solidTop = new G4Tubs("Top", 0, fTankRadius + fTankThickness, fTankThickness/2, 0, 360*deg);
+	solidBot = new G4Tubs("Top", 0, fTankRadius + fTankThickness, fTankThickness/2, 0, 360*deg);
 	solidSide = new G4Tubs("Side", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight, 0, 360*deg);
 
 	// pmt solids 
@@ -127,8 +128,8 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	// NEW:v2 tank made of stainless steel instead of HDPE
 	logTop  = new G4LogicalVolume(solidTop, StainlessSteel, "logTop", 0, 0, 0);
 	physTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logTop, "physTop", logMother, false, 0, fCheckOVerlaps);
-	new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
-	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
+	logBot = new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
+	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logBot, "physBot", logMother, false, 0, fCheckOVerlaps);
 	logSide  = new G4LogicalVolume(solidSide, StainlessSteel, "logSide", 0, 0, 0);
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 

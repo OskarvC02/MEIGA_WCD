@@ -144,19 +144,6 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	// assemble SaltyWCD 
 	G4SDManager* const sdMan = G4SDManager::GetSDMpointer();
 
-	// tank casing are made of Stainless-steel
-	// NEW:v1 Use identical Geometry for WCD and SaltyWCD, no casing
-
-	// logCasingTop = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingTop", 0, 0, 0);
-	// physCasingTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logCasingTop, "physCasingTop", logMother, false, 0, fCheckOVerlaps);
-	
-	// logCasingBot = new G4LogicalVolume(solidCasingTop, StainlessSteel, "logCasingBot", 0, 0, 0);
-	// physCasingBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logCasingBot, "physCasingBot", logMother, false, 0);
-
-	// logCasingSide = new G4LogicalVolume(solidCasingSide, StainlessSteel, "logCasingSide", 0, 0, 0);
-	// physCasingSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logCasingSide, "physCasingSide", logMother, false, 0, fCheckOVerlaps);
-
-
 	// water part
 	logTank  = new G4LogicalVolume(solidTank, SaltyWater, "logTank", 0, 0, 0);
 	physTank = new G4PVPlacement(nullptr, fTankCenter, logTank, "physTank", logMother, false, 0, fCheckOVerlaps);
@@ -168,8 +155,8 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	// NEW:v2 tank made of stainless steel instead of HDPE
 	logTop  = new G4LogicalVolume(solidTop, StainlessSteel, "logTop", 0, 0, 0);
 	physTop = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 2*fTankHalfHeight + 1.5*fTankThickness), logTop, "physTop", logMother, false, 0, fCheckOVerlaps);
-	new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
-	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logTop, "physBot", logMother, false, 0, fCheckOVerlaps);
+	logBot = new G4LogicalVolume(solidBot, StainlessSteel, "logBot", 0, 0, 0);
+	physBot = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + 0.5*fTankThickness), logBot, "physBot", logMother, false, 0, fCheckOVerlaps);
 	logSide  = new G4LogicalVolume(solidSide, StainlessSteel, "logSide", 0, 0, 0);
 	physSide = new G4PVPlacement(nullptr, G4ThreeVector(fTankPosX, fTankPosY, fTankPosZ + fTankHalfHeight + fTankThickness), logSide, "physSide", logMother, false, 0, fCheckOVerlaps);
 
