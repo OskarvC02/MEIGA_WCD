@@ -140,15 +140,139 @@ static G4double water1AbsLen[] = {
 	0.284*scaleAbsLen, 0.302*scaleAbsLen, 0.403*scaleAbsLen, 0.560*scaleAbsLen, 0.735*scaleAbsLen, 0.818*scaleAbsLen,
 	0.923*scaleAbsLen, 0.923*scaleAbsLen, 0.993*scaleAbsLen, 0.993*scaleAbsLen, 1.000*scaleAbsLen, 0.941*scaleAbsLen,
 	0.889*scaleAbsLen, 0.842*scaleAbsLen, 0.754*scaleAbsLen, 0.655*scaleAbsLen, 0.480*scaleAbsLen, 0.380*scaleAbsLen,
-	0.311*scaleAbsLen, 0.257*scaleAbsLen, 0.212*scaleAbsLen, 0.171*scaleAbsLen, 0.137*scaleAbsLen, 0.102*scaleAbsLen
-};
+	0.311 * scaleAbsLen, 0.257 * scaleAbsLen, 0.212 * scaleAbsLen,
+    0.171 * scaleAbsLen, 0.137 * scaleAbsLen, 0.102 * scaleAbsLen};
 
+// NEW:v9 proper treatment of RefIndex, no flat band
+// n calculated from the same IAPWS-97 formula as used later in SaltyWater
+static G4double water1RefIndex[] = {
+    1.33314129, 1.33384057, 1.33410627, 1.3344638,  1.33482531, 1.33528316,
+    1.3356545,  1.33612535, 1.336604,   1.33699278, 1.33758616, 1.33809038,
+    1.3387076,  1.33923245, 1.33998388, 1.34064398, 1.34143346, 1.34224454,
+    1.34307799, 1.34405887, 1.34507114, 1.3462489,  1.34746959, 1.34873495,
+    1.35019557, 1.35187178, 1.35362446, 1.35579992, 1.35809498, 1.36051753};
 
-static G4double water1PhotonEnergyShort[] = {2.08*eV, 4.20*eV};
-static G4double water1RefIndex[] = {1.33, 1.33};
+// NEW:v9 ------------------- SaltyWater -----------------------
 
+// Salty water optical buffer (lives for program duration, outlives MPT)
+static G4double saltyWaterRefIndex[30];
 
-// ---------------------- Water 2 (Geant4 OpNovice example) ----------------------
+namespace SaltyWaterOptics {
+
+  // ============================================================================
+  // 1. COMPILE-TIME CONSTANTS (constexpr)
+  // ============================================================================
+  constexpr double M_H2O = 18.01528;       // g/mol
+  constexpr double M_NaCl = 58.44;         // g/mol
+  constexpr double T_REF = 273.15;         // K
+  constexpr double RHO_REF = 1.0;          // g/cm³
+  constexpr double LAMBDA_REF = 0.589;     // μm
+  constexpr double RHO_H2O_20C = 0.998207; // g/cm³ at 20°C
+
+  // ============================================================================
+  // 2. WANG ET AL. (2017) COEFFICIENTS
+  // ============================================================================
+  // static constexpr: stored in read-only memory, evaluated at compile-time,
+  // zero runtime allocation, thread-safe, and shared across all calls.
+  static constexpr double kCoeffC[5][6] = {
+      {1.61177E+02, -1.11869E+03, 3.12482E+03, -4.16368E+03, 2.70485E+03,
+       -6.91206E+02},
+      {-5.73797E+01, 3.99505E+02, -1.10760E+03, 1.45873E+03, -9.34691E+02,
+       2.35173E+02},
+      {7.96883E+00, -5.55120E+01, 1.53563E+02, -2.01351E+02, 1.28299E+02,
+       -3.20648E+01},
+      {-4.83640E-01, 3.37069E+00, -9.32058E+00, 1.22016E+01, -7.75772E+00,
+       1.93336E+00},
+      {1.06750E-02, -7.44300E-02, 2.05870E-01, -2.69400E-01, 1.71169E-01,
+       -4.26100E-02}};
+
+  // ============================================================================
+  // 3. HELPER FUNCTIONS (inline)
+  // ============================================================================
+  inline double eV_to_um(double E_eV) { return 1.23984193 / E_eV; }
+
+  inline double CalculateDensitySol(double massFraction) {
+    constexpr double b = 0.7018236;
+    constexpr double c = 0.23534949;
+    return RHO_H2O_20C + b * massFraction + c * massFraction * massFraction;
+  }
+
+  inline double mass_to_molar(double mass_frac) {
+    return (mass_frac / M_NaCl) /
+           (mass_frac / M_NaCl + (1.0 - mass_frac) / M_H2O);
+  }
+
+  inline double calc_R_H2O_LL(double lambda_um, double T_c, double rho) {
+    double T_bar = (T_c + T_REF) / T_REF;
+    double rho_bar = rho / RHO_REF;
+    double lambda_bar = lambda_um / LAMBDA_REF;
+    double lambda_bar_sq = lambda_bar * lambda_bar;
+
+    constexpr double a0 = 0.244257733, a1 = 9.74634476e-3, a2 = -3.73234996e-3;
+    constexpr double a3 = 2.68678472e-4, a4 = 1.58920570e-3, a5 = 2.45934259e-3;
+    constexpr double a6 = 0.900704920, a7 = -1.66626219e-2;
+    constexpr double lambda_UV_sq = 0.229202 * 0.229202;
+    constexpr double lambda_IR_sq = 5.432937 * 5.432937;
+
+    return rho_bar *
+           (a0 + a1 * rho_bar + a2 * T_bar + a3 * lambda_bar_sq * T_bar +
+            a4 / lambda_bar_sq + a5 / (lambda_bar_sq - lambda_UV_sq) +
+            a6 / (lambda_bar_sq - lambda_IR_sq) + a7 * rho_bar * rho_bar);
+  }
+
+  inline double calc_R_H2O_molar(double lambda_um, double T_c, double rho) {
+    return M_H2O * calc_R_H2O_LL(lambda_um, T_c, rho) / rho;
+  }
+
+  inline double calc_R_NaCl(double lambda_um, double w_pct) {
+    double R = 0.0;
+    for (int k = 0; k < 6; ++k) {
+      double Bk = 0.0;
+      for (int l = 1; l < 6; ++l) {
+        Bk += kCoeffC[l - 1][k] * std::pow(w_pct, l);
+      }
+      R += Bk * std::pow(lambda_um, k);
+    }
+    return R;
+  }
+
+  inline double calc_V_sol(double mass_frac) {
+    double rho = CalculateDensitySol(mass_frac);
+    double y_NaCl = mass_to_molar(mass_frac);
+    double M_sol = y_NaCl * M_NaCl + (1.0 - y_NaCl) * M_H2O;
+    return M_sol / rho;
+  }
+
+  // ============================================================================
+  // 4. MAIN CALCULATION
+  // ============================================================================
+  inline double calc_n_NaCl(double energy_eV, double mass_frac) {
+    // Manual clamp (replaces np.clip)
+    if (mass_frac < 0.0)
+      mass_frac = 0.0;
+    else if (mass_frac > 0.166667)
+      mass_frac = 0.166667;
+
+    double lambda_um = eV_to_um(energy_eV);
+    double y_NaCl = mass_to_molar(mass_frac);
+    double y_H2O = 1.0 - y_NaCl;
+
+    // R_H2O computed per call for clarity; could be cached if T/rho are fixed
+    double R_H2O = calc_R_H2O_molar(lambda_um, 20.0, RHO_H2O_20C);
+
+    // ⚠️ CRITICAL: Wang coefficients expect w in PERCENT (0-100)
+    double R_NaCl = calc_R_NaCl(lambda_um, mass_frac * 100.0);
+
+    double R_sol = y_H2O * R_H2O + y_NaCl * R_NaCl;
+    double V_sol = calc_V_sol(mass_frac);
+    double Q = R_sol / V_sol;
+
+    return std::sqrt((1.0 + 2.0 * Q) / (1.0 - Q));
+  }
+
+} // namespace SaltyWaterOptics
+
+// ----------------- Water 2 (Geant4 OpNovice example) ----------------------
 
 // arrays from Geant4 OpNovice example
 static G4double water2PhotonEnergy[] = {
@@ -346,7 +470,8 @@ G4OpticalSurface* Materials::LinerOptSurf2;
 
 G4MaterialPropertiesTable* Materials::waterPT1;
 G4MaterialPropertiesTable* Materials::waterPT2;
-G4MaterialPropertiesTable* Materials::linerPT1;
+G4MaterialPropertiesTable* Materials::saltyWaterPT;
+G4MaterialPropertiesTable *Materials::linerPT1;
 G4MaterialPropertiesTable* Materials::scinPT;
 G4MaterialPropertiesTable* Materials::scinOptSurfPT;
 G4MaterialPropertiesTable* Materials::pmmaPT;
@@ -354,8 +479,6 @@ G4MaterialPropertiesTable* Materials::pethylenePT;
 G4MaterialPropertiesTable* Materials::fpethylenePT;
 G4MaterialPropertiesTable* Materials::pyrexPT;
 G4MaterialPropertiesTable* Materials::linerOpticalPT;
-
-double fracMassNaCl;
 
 Materials::Materials() 
 {
@@ -452,9 +575,9 @@ Materials::CreateCompounds()
 								//
 								CH
 								|
-							 / \
-			 C6H5:  |   |
-							 \ /
+							   / \
+			           C6H5:  |   |
+							   \ /
 	*/
 
 	// PPO:
@@ -510,7 +633,8 @@ Materials::CreateMaterials()
 
 	// Define different PropertiesTable for different water "types"
 	waterPT1 = new G4MaterialPropertiesTable();
-	waterPT1->AddProperty("RINDEX", water1PhotonEnergyShort, water1RefIndex, 2);
+    // NEW:v9 proper wavelength dependent refraction index
+	waterPT1->AddProperty("RINDEX", water1PhotonEnergy, water1RefIndex, 2);
 	waterPT1->AddProperty("ABSLENGTH", water1PhotonEnergy, water1AbsLen, water1ArrEntries);
 	
 	// --- Material Properties Table from Geant4 OpNovice example.
@@ -558,10 +682,10 @@ Materials::CreateMaterials()
 	ScinPlastic->AddMaterial(PPO, 1*perCent);
 	ScinPlastic->AddMaterial(POPOP, 0.3*perCent);
 
-	// Scintillator Coating - 15% TiO2 and 85% polystyrene by weight.
-	ScinCoating = new G4Material("ScinCoating", 1.52 * g/cm3, 2);
-	ScinCoating->AddMaterial(TiO2, 15*perCent);
-	ScinCoating->AddMaterial(Polystyrene, 85*perCent);
+    // Scintillator Coating - 15% TiO2 and 85% polystyrene by weight.
+    ScinCoating = new G4Material("ScinCoating", 1.52 * g/cm3, 2);
+    ScinCoating->AddMaterial(TiO2, 15*perCent);
+    ScinCoating->AddMaterial(Polystyrene, 85*perCent);
 
 	// Add scintillator property table
 	scinPT = new G4MaterialPropertiesTable();
@@ -611,7 +735,7 @@ Materials::CreateMaterials()
 	*/
 
 	// Polyethylene (for internal cladding of WLS fibers)
-	Pethylene = new G4Material("Pethylene", 1.200 * g/cm3, 2);
+  Pethylene = new G4Material("Pethylene", 1.200 * g / cm3, 2);
 	Pethylene->AddElement(elC, 2);
 	Pethylene->AddElement(elH, 4);
 
@@ -839,7 +963,60 @@ Materials::CreateMaterials()
         LechoFijo_74porciento->AddMaterial(NiMo_Al2O3_74porciento, 99.84*perCent);
         LechoFijo_74porciento->AddMaterial(Diesel, 0.16*perCent);
 
-// ++++++++++++++++++++++++++++++++ HASTA AQUÌ SE DEFINIERON LOS MATERIALES PARA EL CATALIZADOR ++++++++++++++++++++++++++++++++
+  // ++++++++++++++++++++++++++++++++ HASTA AQUÌ SE DEFINIERON LOS MATERIALES
+  // PARA EL CATALIZADOR ++++++++++++++++++++++++++++++++
+}
 
+void Materials::CreateSaltyWater(double massFraction) {
+    // Safety: Water and Salt must exist first
+    if (!Water || !Salt) {
+        G4Exception("Materials::CreateSaltyWater", "Mat002", FatalException,
+                    "Water and Salt materials must be initialized before creating SaltyWater.");
+    }
 
+    // 2. STRICT RANGE VALIDATION (NEW)
+    if (massFraction < 0.0 || massFraction > 0.166667) {
+        G4Exception("Materials::CreateSaltyWater", "Mat003", FatalException,
+                    "Salinity out of valid range [0.0, 0.166667] (0% to 16.6667% mass fraction). "
+                    "The Wang et al. (2017) mixing rule is only validated up to 16.6667%. "
+                    "Values outside this range would produce unphysical optical constants. "
+                    "Please adjust the input mass fraction.");
+    }
+
+    // Clean up old MPT to prevent memory leaks
+    delete saltyWaterPT;
+    saltyWaterPT = nullptr;
+
+    // 1. Build refractive index table
+    for (G4int i = 0; i < water1ArrEntries; ++i) {
+        saltyWaterRefIndex[i] = SaltyWaterOptics::calc_n_NaCl(water1PhotonEnergy[i]/eV, massFraction); // need photon energy in eV not MeV
+    }
+
+    // --- DEBUG OUTPUT START ---
+    G4cout << "\n[DEBUG] SaltyWater RINDEX Table (30 points):" << G4endl;
+    G4cout << std::fixed << std::setprecision(6);
+    for (G4int i = 0; i < water1ArrEntries; ++i) {
+        G4cout << "  E = " << water1PhotonEnergy[i]/eV << " eV  ->  n = " << saltyWaterRefIndex[i] << G4endl;
+    }
+
+    // 2. Create & attach MPT
+    saltyWaterPT = new G4MaterialPropertiesTable();
+    saltyWaterPT->AddProperty("RINDEX", water1PhotonEnergy, saltyWaterRefIndex, water1ArrEntries);
+
+    // 3. Compute density at runtime (not static)
+    double density = SaltyWaterOptics::CalculateDensitySol(massFraction); // in g/cm3, convert to G4 units later
+    G4cout << "[DEBUG] Computed density: " << density << " g/cm3" << G4endl;
+
+    // 4. Create/Recreate Material
+    // Note: Geant4 materials cannot change density after creation.
+    // We delete and recreate to support arbitrary salinity changes.
+    delete SaltyWater;
+    SaltyWater = new G4Material("SaltyWater", density * g/cm3, 2);
+    SaltyWater->AddMaterial(Water, 1.0 - massFraction);
+    SaltyWater->AddMaterial(Salt, massFraction);
+    SaltyWater->SetMaterialPropertiesTable(saltyWaterPT);
+
+    // Success message
+    G4cout << "[SUCCESS] Successfully initialized Salty water with w = " << massFraction << G4endl;
+    // --- DEBUG OUTPUT END ---
 }

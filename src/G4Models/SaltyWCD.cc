@@ -71,12 +71,10 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4PVPlacement* physShieldSide = nullptr;
 
 	// --------------------------------------------------------------------
-	// SaltyWater defined here for this particular detector
+	// NEW:v9 SaltyWater lives in Materials() 
+	// but is initialized via function call with Mass Fraction
 	// --------------------------------------------------------------------
-	G4Material* SaltyWater = new G4Material("SaltyWater", 1.1 * g/cm3, 2);
-	SaltyWater->AddMaterial(Materials().Water,1-fNaClFracMass);
-	SaltyWater->AddMaterial(Materials().Salt, fNaClFracMass);
-	SaltyWater->SetMaterialPropertiesTable(Materials().waterPT1);
+	Materials().CreateSaltyWater(fNaClFracMass);
 
 	G4NistManager* nist = G4NistManager::Instance();
 	G4Material* StainlessSteel = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
@@ -141,7 +139,7 @@ SaltyWCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& t
 	G4SDManager* const sdMan = G4SDManager::GetSDMpointer();
 
 	// water part
-	logTank  = new G4LogicalVolume(solidTank, SaltyWater, "logTank", 0, 0, 0);
+	logTank  = new G4LogicalVolume(solidTank, Materials().SaltyWater, "logTank", 0, 0, 0);
 	physTank = new G4PVPlacement(nullptr, fTankCenter, logTank, "physTank", logMother, false, 0, fCheckOVerlaps);
 	// register water logical volume in the Detector
 	if (!detector.HasLogicalVolume("logTank"))

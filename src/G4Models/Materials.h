@@ -111,6 +111,7 @@ public:
 
 	static G4MaterialPropertiesTable* waterPT1; 
 	static G4MaterialPropertiesTable* waterPT2;
+	static G4MaterialPropertiesTable* saltyWaterPT;
 	static G4MaterialPropertiesTable* linerPT1;
 	static G4MaterialPropertiesTable* scinPT;
 	static G4MaterialPropertiesTable* scinOptSurfPT;
@@ -123,10 +124,7 @@ public:
 	const G4double* GetScinPhotonEnergyArray() const;
 	const G4double* GetScinRefIndexArray() const;
 
-	void SetNaClFracMass(double fracNaCl) { fFracNaCl = fracNaCl; }
-	double GetNaClFracMass() { return fFracNaCl; }
-	
-
+	void CreateSaltyWater(double massFraction);
 private:
 
 	void CreateElements(); // function to create individual elements
@@ -143,11 +141,6 @@ private:
 	// pmma
 	// according to datasheet BCF-92 WLS fiber
 	const G4double fPMMADecayTime = 2.5*ns;
-
-	G4double fFracNaCl = 0;
-
-
-
 
 };	
 
