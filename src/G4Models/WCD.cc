@@ -30,6 +30,7 @@ WCD::BuildDetector(G4LogicalVolume* logMother, Detector& detector, Event& theEve
 	// logical volumes
 	G4LogicalVolume* logTank = nullptr;
 	G4LogicalVolume* logTop  = nullptr;
+	G4LogicalVolume* logBot  = nullptr;
 	G4LogicalVolume* logSide = nullptr;
 
 	G4LogicalVolume* logPMT = nullptr;
