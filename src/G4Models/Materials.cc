@@ -156,119 +156,337 @@ static G4double water1RefIndex[] = {
 
 // Salty water optical buffer (lives for program duration, outlives MPT)
 static G4double saltyWaterRefIndex[30];
+static G4double saltyWaterAbsLen[30];
+
+// ============================================================================
+// Salty-water optical model
+// Bain et al. (2019) effective oscillator model
+//
+// Conventions:
+//   wavelength       : micrometres (um)
+//   w                : NaCl mass fraction, e.g. 0.10 = 10 wt%
+//   density          : g/cm^3
+//   absorption length: metres inside this namespace
+//   energy           : eV
+//
+// Geant4 conversion to internal units is done only at the MPT interface.
+// ============================================================================
 
 namespace SaltyWaterOptics {
 
-  // ============================================================================
-  // 1. COMPILE-TIME CONSTANTS (constexpr)
-  // ============================================================================
-  constexpr double M_H2O = 18.01528;       // g/mol
-  constexpr double M_NaCl = 58.44;         // g/mol
-  constexpr double T_REF = 273.15;         // K
-  constexpr double RHO_REF = 1.0;          // g/cm³
-  constexpr double LAMBDA_REF = 0.589;     // μm
-  constexpr double RHO_H2O_20C = 0.998207; // g/cm³ at 20°C
+    // =========================================================================
+    // 1. Constants
+    // =========================================================================
 
-  // ============================================================================
-  // 2. WANG ET AL. (2017) COEFFICIENTS
-  // ============================================================================
-  // static constexpr: stored in read-only memory, evaluated at compile-time,
-  // zero runtime allocation, thread-safe, and shared across all calls.
-  static constexpr double kCoeffC[5][6] = {
-      {1.61177E+02, -1.11869E+03, 3.12482E+03, -4.16368E+03, 2.70485E+03,
-       -6.91206E+02},
-      {-5.73797E+01, 3.99505E+02, -1.10760E+03, 1.45873E+03, -9.34691E+02,
-       2.35173E+02},
-      {7.96883E+00, -5.55120E+01, 1.53563E+02, -2.01351E+02, 1.28299E+02,
-       -3.20648E+01},
-      {-4.83640E-01, 3.37069E+00, -9.32058E+00, 1.22016E+01, -7.75772E+00,
-       1.93336E+00},
-      {1.06750E-02, -7.44300E-02, 2.05870E-01, -2.69400E-01, 1.71169E-01,
-       -4.26100E-02}};
+    constexpr double kHc_eV_um = 1.239841984;  // h*c in eV*um
 
-  // ============================================================================
-  // 3. HELPER FUNCTIONS (inline)
-  // ============================================================================
-  inline double eV_to_um(double E_eV) { return 1.23984193 / E_eV; }
+    constexpr double kTRefK = 273.15;          // K
+    constexpr double kRhoRef = 1.0;            // g/cm^3
+    constexpr double kLambdaRefUm = 0.589;     // um
+    constexpr double kRhoWater20C = 0.998207;  // g/cm^3
 
-  inline double CalculateDensitySol(double massFraction) {
-    constexpr double b = 0.7018236;
-    constexpr double c = 0.23534949;
-    return RHO_H2O_20C + b * massFraction + c * massFraction * massFraction;
-  }
+    // Bain et al. (2019), NaCl effective oscillator.
+    // Wavenumber is in um^-1.
+    constexpr double kB = 6.86;               // um^-1
+    constexpr double kNu0 = 8.51;             // um^-1
+    constexpr double kGamma = 1.66e-6;        // um^-1
 
-  inline double mass_to_molar(double mass_frac) {
-    return (mass_frac / M_NaCl) /
-           (mass_frac / M_NaCl + (1.0 - mass_frac) / M_H2O);
-  }
+    // =========================================================================
+    // 2. Basic conversions
+    // =========================================================================
 
-  inline double calc_R_H2O_LL(double lambda_um, double T_c, double rho) {
-    double T_bar = (T_c + T_REF) / T_REF;
-    double rho_bar = rho / RHO_REF;
-    double lambda_bar = lambda_um / LAMBDA_REF;
-    double lambda_bar_sq = lambda_bar * lambda_bar;
+    inline double EnergyEVToWavelengthUm(const double energy_eV)
+    {
+        if (energy_eV <= 0.0) {
+            throw std::invalid_argument(
+                "Photon energy must be greater than zero."
+            );
+        }
 
-    constexpr double a0 = 0.244257733, a1 = 9.74634476e-3, a2 = -3.73234996e-3;
-    constexpr double a3 = 2.68678472e-4, a4 = 1.58920570e-3, a5 = 2.45934259e-3;
-    constexpr double a6 = 0.900704920, a7 = -1.66626219e-2;
-    constexpr double lambda_UV_sq = 0.229202 * 0.229202;
-    constexpr double lambda_IR_sq = 5.432937 * 5.432937;
-
-    return rho_bar *
-           (a0 + a1 * rho_bar + a2 * T_bar + a3 * lambda_bar_sq * T_bar +
-            a4 / lambda_bar_sq + a5 / (lambda_bar_sq - lambda_UV_sq) +
-            a6 / (lambda_bar_sq - lambda_IR_sq) + a7 * rho_bar * rho_bar);
-  }
-
-  inline double calc_R_H2O_molar(double lambda_um, double T_c, double rho) {
-    return M_H2O * calc_R_H2O_LL(lambda_um, T_c, rho) / rho;
-  }
-
-  inline double calc_R_NaCl(double lambda_um, double w_pct) {
-    double R = 0.0;
-    for (int k = 0; k < 6; ++k) {
-      double Bk = 0.0;
-      for (int l = 1; l < 6; ++l) {
-        Bk += kCoeffC[l - 1][k] * std::pow(w_pct, l);
-      }
-      R += Bk * std::pow(lambda_um, k);
+        return kHc_eV_um / energy_eV;
     }
-    return R;
-  }
 
-  inline double calc_V_sol(double mass_frac) {
-    double rho = CalculateDensitySol(mass_frac);
-    double y_NaCl = mass_to_molar(mass_frac);
-    double M_sol = y_NaCl * M_NaCl + (1.0 - y_NaCl) * M_H2O;
-    return M_sol / rho;
-  }
+    // =========================================================================
+    // 3. Solution density
+    //
+    // Bain parameterization expressed as a function of NaCl mass fraction.
+    //
+    // w = 0.10 means 10 wt% NaCl.
+    // =========================================================================
 
-  // ============================================================================
-  // 4. MAIN CALCULATION
-  // ============================================================================
-  inline double calc_n_NaCl(double energy_eV, double mass_frac) {
-    // Manual clamp (replaces np.clip)
-    if (mass_frac < 0.0)
-      mass_frac = 0.0;
-    else if (mass_frac > 0.166667)
-      mass_frac = 0.166667;
+    inline double CalculateDensitySol(const double massFraction)
+    {
+        if (massFraction < 0.0 || massFraction > 1.0) {
+            throw std::invalid_argument(
+                "NaCl mass fraction must be between 0 and 1."
+            );
+        }
 
-    double lambda_um = eV_to_um(energy_eV);
-    double y_NaCl = mass_to_molar(mass_frac);
-    double y_H2O = 1.0 - y_NaCl;
+        constexpr double b = 0.7018236;
+        constexpr double c = 0.23534949;
 
-    // R_H2O computed per call for clarity; could be cached if T/rho are fixed
-    double R_H2O = calc_R_H2O_molar(lambda_um, 20.0, RHO_H2O_20C);
+        return kRhoWater20C
+             + b * massFraction
+             + c * massFraction * massFraction;
+    }
 
-    // ⚠️ CRITICAL: Wang coefficients expect w in PERCENT (0-100)
-    double R_NaCl = calc_R_NaCl(lambda_um, mass_frac * 100.0);
+    // =========================================================================
+    // 4. Pure-water real refractive index
+    //
+    // Lorentz-Lorenz / IAPWS-type formulation used in the original code.
+    // rho is in g/cm^3, temperature in degrees C, wavelength in um.
+    // =========================================================================
 
-    double R_sol = y_H2O * R_H2O + y_NaCl * R_NaCl;
-    double V_sol = calc_V_sol(mass_frac);
-    double Q = R_sol / V_sol;
+    inline double CalculateRWaterLL(
+        const double wavelength_um,
+        const double temperature_C,
+        const double rho_g_cm3)
+    {
+        if (wavelength_um <= 0.0 || rho_g_cm3 <= 0.0) {
+            throw std::invalid_argument(
+                "Wavelength and density must be greater than zero."
+            );
+        }
 
-    return std::sqrt((1.0 + 2.0 * Q) / (1.0 - Q));
-  }
+        const double temperature_bar =
+            (temperature_C + kTRefK) / kTRefK;
+
+        const double rho_bar =
+            rho_g_cm3 / kRhoRef;
+
+        const double lambda_bar =
+            wavelength_um / kLambdaRefUm;
+
+        const double lambda_bar_sq =
+            lambda_bar * lambda_bar;
+
+        constexpr double a0 = 0.244257733;
+        constexpr double a1 = 9.74634476e-3;
+        constexpr double a2 = -3.73234996e-3;
+        constexpr double a3 = 2.68678472e-4;
+        constexpr double a4 = 1.58920570e-3;
+        constexpr double a5 = 2.45934259e-3;
+        constexpr double a6 = 0.900704920;
+        constexpr double a7 = -1.66626219e-2;
+
+        constexpr double lambda_UV_sq =
+            0.229202 * 0.229202;
+
+        constexpr double lambda_IR_sq =
+            5.432937 * 5.432937;
+
+        return rho_bar *
+            (
+                a0
+                + a1 * rho_bar
+                + a2 * temperature_bar
+                + a3 * lambda_bar_sq * temperature_bar
+                + a4 / lambda_bar_sq
+                + a5 / (lambda_bar_sq - lambda_UV_sq)
+                + a6 / (lambda_bar_sq - lambda_IR_sq)
+                + a7 * rho_bar * rho_bar
+            );
+    }
+
+    inline double CalculateWaterRefractiveIndex(
+        const double wavelength_um,
+        const double temperature_C,
+        const double rho_g_cm3)
+    {
+        const double R =
+            CalculateRWaterLL(
+                wavelength_um,
+                temperature_C,
+                rho_g_cm3
+            );
+
+        return std::sqrt(
+            (1.0 + 2.0 * R) / (1.0 - R)
+        );
+    }
+
+    // =========================================================================
+    // 5. Absorption-index conversions
+    //
+    // alpha = 4*pi*k/lambda
+    //
+    // wavelength_um is in um.
+    // absorptionLength_m is in metres.
+    // =========================================================================
+
+    inline double AbsorptionLengthToK(
+        const double absorptionLength_m,
+        const double wavelength_um)
+    {
+        if (absorptionLength_m <= 0.0) {
+            throw std::invalid_argument(
+                "Absorption length must be greater than zero."
+            );
+        }
+
+        if (wavelength_um <= 0.0) {
+            throw std::invalid_argument(
+                "Wavelength must be greater than zero."
+            );
+        }
+
+        // Convert lambda from um to m.
+        const double wavelength_m =
+            wavelength_um * 1.0e-6;
+
+        return wavelength_m /
+               (4.0 * M_PI * absorptionLength_m);
+    }
+
+    inline double KToAbsorptionLength(
+        const double k,
+        const double wavelength_um)
+    {
+        if (wavelength_um <= 0.0) {
+            throw std::invalid_argument(
+                "Wavelength must be greater than zero."
+            );
+        }
+
+        if (k <= 0.0) {
+            // Zero absorption corresponds to an infinite absorption length.
+            return HUGE_VAL;
+        }
+
+        const double wavelength_m =
+            wavelength_um * 1.0e-6;
+
+        return wavelength_m /
+               (4.0 * M_PI * k);
+    }
+
+    // =========================================================================
+    // 6. Bain effective oscillator: real part
+    //
+    // n_solution =
+    //     1
+    //     + phi_s * (2/pi) * B*nu0/(nu0^2 - nu^2)
+    //     + phi_w * (n_water - 1)
+    // =========================================================================
+
+    inline double CalcRefIndexSol(
+        const double energy_eV,
+        const double massFraction,
+        const double temperature_C = 20.0)
+    {
+        const double wavelength_um =
+            EnergyEVToWavelengthUm(energy_eV);
+
+        const double nu = 1.0/wavelength_um;
+
+        const double rho_solution =
+            CalculateDensitySol(massFraction);
+
+        // Bain treats the pure-solute density as an extrapolated density
+        // from the solution-density parameterization in this implementation.
+        const double rho_NaCl =
+            CalculateDensitySol(1.0);
+
+        const double phi_s =
+            massFraction * rho_solution / rho_NaCl;
+
+        const double phi_w =
+            (1.0 - massFraction)
+            * rho_solution
+            / kRhoWater20C;
+
+        const double n_water =
+            CalculateWaterRefractiveIndex(
+                wavelength_um,
+                temperature_C,
+                kRhoWater20C
+            );
+
+        const double oscillatorTerm =
+            (2.0 / M_PI)
+            * kB
+            * kNu0
+            / (kNu0 * kNu0 - nu * nu);
+
+        return 1.0
+             + phi_s * oscillatorTerm
+             + phi_w * (n_water - 1.0);
+    }
+
+    // =========================================================================
+    // 7. Bain effective oscillator: imaginary part
+    //
+    // k_solution =
+    //     phi_s * [2*nu/pi * B*nu0*Gamma /
+    //              (nu0^2 - nu^2)^2]
+    //     + phi_w * k_water
+    // =========================================================================
+
+    inline double CalcAbsIndexSol(
+        const double wavelength_um,
+        const double massFraction,
+        const double k_water)
+    {
+        const double nu = 1.0/wavelength_um;
+
+        const double rho_solution =
+            CalculateDensitySol(massFraction);
+
+        const double rho_NaCl =
+            CalculateDensitySol(1.0);
+
+        const double phi_s =
+            massFraction * rho_solution / rho_NaCl;
+
+        const double phi_w =
+            (1.0 - massFraction)
+            * rho_solution
+            / kRhoWater20C;
+
+        const double denominator =
+            kNu0 * kNu0 - nu * nu;
+
+        const double k_solute =
+            (2.0 * nu / M_PI)
+            * kB
+            * kNu0
+            * kGamma
+            / (denominator * denominator);
+
+        return phi_s * k_solute
+             + phi_w * k_water;
+    }
+
+    // =========================================================================
+    // 8. Calculate solution absorption length from a pure-water baseline
+    //
+    // waterAbsorptionLength_m is explicitly supplied by the caller.
+    // This makes the model independent of your particular baseline table.
+    // =========================================================================
+
+    inline double CalcAbsLengthSol(
+        const double wavelength_um,
+        const double massFraction,
+        const double waterAbsorptionLength_m)
+    {
+        const double k_water =
+            AbsorptionLengthToK(
+                waterAbsorptionLength_m,
+                wavelength_um
+            );
+
+        const double k_solution =
+            CalcAbsIndexSol(
+                wavelength_um,
+                massFraction,
+                k_water
+            );
+
+        return KToAbsorptionLength(
+            k_solution,
+            wavelength_um
+        );
+    }
 
 } // namespace SaltyWaterOptics
 
@@ -967,56 +1185,168 @@ Materials::CreateMaterials()
   // PARA EL CATALIZADOR ++++++++++++++++++++++++++++++++
 }
 
-void Materials::CreateSaltyWater(double massFraction) {
-    // Safety: Water and Salt must exist first
+void Materials::CreateSaltyWater(const double massFraction)
+{
+    // -------------------------------------------------------------------------
+    // Validate concentration.
+    // 0.10 means 10 wt% NaCl.
+    // -------------------------------------------------------------------------
+    if (massFraction < 0.0 || massFraction > 1.0) {
+        G4Exception(
+            "Materials::CreateSaltyWater",
+            "Mat003",
+            FatalException,
+            "NaCl mass fraction must be between 0 and 1."
+        );
+    }
+
+    // Water and salt must exist before creating the solution.
     if (!Water || !Salt) {
-        G4Exception("Materials::CreateSaltyWater", "Mat002", FatalException,
-                    "Water and Salt materials must be initialized before creating SaltyWater.");
+        G4Exception(
+            "Materials::CreateSaltyWater",
+            "Mat002",
+            FatalException,
+            "Water and Salt materials must be initialized "
+            "before creating SaltyWater."
+        );
     }
 
-    // 2. STRICT RANGE VALIDATION (NEW)
-    if (massFraction < 0.0 || massFraction > 0.166667) {
-        G4Exception("Materials::CreateSaltyWater", "Mat003", FatalException,
-                    "Salinity out of valid range [0.0, 0.166667] (0% to 16.6667% mass fraction). "
-                    "The Wang et al. (2017) mixing rule is only validated up to 16.6667%. "
-                    "Values outside this range would produce unphysical optical constants. "
-                    "Please adjust the input mass fraction.");
-    }
-
-    // Clean up old MPT to prevent memory leaks
-    delete saltyWaterPT;
-    saltyWaterPT = nullptr;
-
-    // 1. Build refractive index table
     for (G4int i = 0; i < water1ArrEntries; ++i) {
-        saltyWaterRefIndex[i] = SaltyWaterOptics::calc_n_NaCl(water1PhotonEnergy[i]/eV, massFraction); // need photon energy in eV not MeV
+
+        const double energy_eV =
+            water1PhotonEnergy[i] / eV;
+
+        const double wavelength_um =
+            SaltyWaterOptics::EnergyEVToWavelengthUm(energy_eV);
+
+        // ---------------------------------------------------------------------
+        // Real refractive index n
+        // ---------------------------------------------------------------------
+
+        saltyWaterRefIndex[i] =
+            SaltyWaterOptics::CalcRefIndexSol(
+                energy_eV,
+                massFraction,
+                20.0
+            );
+
+        // ---------------------------------------------------------------------
+        // Imaginary refractive index k:
+        //
+        // water1AbsLen is assumed to be stored in Geant4 length units.
+        // Convert to metres for the optics calculation.
+        // ---------------------------------------------------------------------
+
+        const double waterAbsorptionLength_m =
+            water1AbsLen[i] / m;
+
+        const double solutionAbsorptionLength_m =
+            SaltyWaterOptics::CalcAbsLengthSol(
+                wavelength_um,
+                massFraction,
+                waterAbsorptionLength_m
+            );
+
+        // IMPORTANT:
+        // Geant4 expects ABSLENGTH in Geant4 internal length units.
+        saltyWaterAbsLen[i] =
+            solutionAbsorptionLength_m * m;
     }
 
-    // --- DEBUG OUTPUT START ---
-    G4cout << "\n[DEBUG] SaltyWater RINDEX Table (30 points):" << G4endl;
-    G4cout << std::fixed << std::setprecision(6);
+    // Debug outputs
+
+    G4out<<G4endl;
+    G4cout<< "[DEBUG] Salty Water RINDEX = "<< G4endl;
     for (G4int i = 0; i < water1ArrEntries; ++i) {
-        G4cout << "  E = " << water1PhotonEnergy[i]/eV << " eV  ->  n = " << saltyWaterRefIndex[i] << G4endl;
+        G4cout<< saltyWaterRefIndex[i] << " ";
+        if (i % 6 == 5){
+            G4cout << G4endl;
+        }      
     }
 
-    // 2. Create & attach MPT
+    G4out<<G4endl;
+    G4cout<< "[DEBUG] Salty Water ABSLEN = "<< G4endl;
+    for (G4int i = 0; i < water1ArrEntries; ++i) {
+        G4cout<< saltyWaterAbsLen[i] << " ";
+        if (i % 6 == 5){
+            G4cout << G4endl;
+        }      
+    }
+    G4out<<G4endl;
+
+    
+    // -------------------------------------------------------------------------
+    // Build material properties table.
+    // -------------------------------------------------------------------------
+
     saltyWaterPT = new G4MaterialPropertiesTable();
-    saltyWaterPT->AddProperty("RINDEX", water1PhotonEnergy, saltyWaterRefIndex, water1ArrEntries);
 
-    // 3. Compute density at runtime (not static)
-    double density = SaltyWaterOptics::CalculateDensitySol(massFraction); // in g/cm3, convert to G4 units later
-    G4cout << "[DEBUG] Computed density: " << density << " g/cm3" << G4endl;
+    saltyWaterPT->AddProperty(
+        "RINDEX",
+        water1PhotonEnergy,
+        saltyWaterRefIndex,
+        water1ArrEntries
+    );
 
-    // 4. Create/Recreate Material
-    // Note: Geant4 materials cannot change density after creation.
-    // We delete and recreate to support arbitrary salinity changes.
-    delete SaltyWater;
-    SaltyWater = new G4Material("SaltyWater", density * g/cm3, 2);
-    SaltyWater->AddMaterial(Water, 1.0 - massFraction);
-    SaltyWater->AddMaterial(Salt, massFraction);
+    saltyWaterPT->AddProperty(
+        "ABSLENGTH",
+        water1PhotonEnergy,
+        saltyWaterAbsLen,
+        water1ArrEntries    
+    );
+
+    // -------------------------------------------------------------------------
+    // Density
+    // -------------------------------------------------------------------------
+
+    const double density =
+        SaltyWaterOptics::CalculateDensitySol(massFraction);
+
+    // -------------------------------------------------------------------------
+    // Create material.
+    //
+    // IMPORTANT:
+    // Do not delete an existing G4Material here. Geant4 recommends that
+    // materials remain in its global material table for the lifetime of
+    // the run.
+    // -------------------------------------------------------------------------
+
+    if (SaltyWater != nullptr) {
+        G4Exception(
+            "Materials::CreateSaltyWater",
+            "Mat004",
+            FatalException,
+            "SaltyWater already exists. "
+            "Create each salinity as a separate material instead of "
+            "deleting and recreating an existing G4Material."
+        );
+    }
+
+    SaltyWater =
+        new G4Material(
+            "SaltyWater",
+            density * g / cm3,
+            2
+        );
+
+    SaltyWater->AddMaterial(
+        Water,
+        1.0 - massFraction
+    );
+
+    SaltyWater->AddMaterial(
+        Salt,
+        massFraction
+    );
+
     SaltyWater->SetMaterialPropertiesTable(saltyWaterPT);
 
-    // Success message
-    G4cout << "[SUCCESS] Successfully initialized Salty water with w = " << massFraction << G4endl;
-    // --- DEBUG OUTPUT END ---
+    // Keep this only while debugging.
+    G4cout
+        << "[SaltyWater] NaCl mass fraction = "
+        << massFraction
+        << ", density = "
+        << density
+        << " g/cm3"
+        << G4endl;
 }
