@@ -10,6 +10,9 @@
 #include <G4RunManager.hh>
 #include <G4OpticalPhoton.hh>
 
+// NEW:v10
+#include "G4RootAnalysisManager.hh"
+
 using namespace std;
 
 G4MPMTAction::G4MPMTAction(const G4String& name, const G4int dId, const G4int oId, Event& theEvent) :
@@ -26,6 +29,30 @@ G4MPMTAction::G4MPMTAction(const G4String& name, const G4int dId, const G4int oI
 		detSimData.MakeOptDeviceSimData(fOptDeviceId);
 		// OptDeviceSimData& OptDeviceSimData = detSimData.GetOptDeviceSimData(fOptDeviceId);
 
+		// NEW:v10
+		auto* analysisManager =
+			G4RootAnalysisManager::Instance();
+
+		fHPhotonWavelength =
+			analysisManager->GetH1Id("PhotonWavelengthAtPMT");
+
+		fHPhotonOpticalPath =
+			analysisManager->GetH1Id("PhotonOpticalPathAtPMT");
+
+		fHPhotonWavelengthVsPath =
+			analysisManager->GetH2Id("PhotonWavelengthVsPathAtPMT");
+
+		fHPhotonArrivalTime =
+			analysisManager->GetH1Id("PhotonArrivalTimeAtPMT");
+
+		fHPEWavelength =
+			analysisManager->GetH1Id("PEWavelength");
+
+		fHPEOpticalPath =
+			analysisManager->GetH1Id("PEOpticalPath");
+
+		fHPEArrivalTime =
+			analysisManager->GetH1Id("PEArrivalTime");
 	}
 
 void
@@ -82,17 +109,72 @@ G4MPMTAction::ProcessHits(G4Step* const step, G4TouchableHistory* const /*rOHist
 
 	auto& pmt = fEvent.GetDetector(fDetectorId).GetOptDevice(fOptDeviceId);
 	double energy = step->GetPreStepPoint()->GetKineticEnergy() / CLHEP::eV;
+
+	// NEW:v10 more photon data
+	const G4double wavelength_nm =
+		1239.841984 / energy;
+
+	const G4double opticalPath_m =
+		step->GetTrack()->GetTrackLength()
+		/ CLHEP::m;
+
+	const G4double arrivalTime_ns =
+    step->GetPreStepPoint()->GetGlobalTime()
+    / CLHEP::ns;
+
 	// kill if photon energy is out of PMT range
 	if (energy < pmt.GetOpticalRange()[0]  || energy > pmt.GetOpticalRange()[1]) 
 		return true; 
 
+	// NEW:v10 Extra Analysis Tools for optical Photons
+	auto* analysisManager =
+		G4RootAnalysisManager::Instance();
+
 	SimData& simData = fEvent.GetSimData();
 	if (simData.GetSimulationMode() == SimData::SimulationMode::eFull) {
 		
+		// NEW:v10 pre-detection photons are only simulated in eFull mode
+		analysisManager->FillH1(
+			fHPhotonWavelength,
+			wavelength_nm * CLHEP::nm
+		);
+
+		analysisManager->FillH1(
+			fHPhotonOpticalPath,
+			opticalPath_m * CLHEP::m
+		);
+
+		analysisManager->FillH2(
+			fHPhotonWavelengthVsPath,
+			wavelength_nm * CLHEP::nm,
+			opticalPath_m * CLHEP::m
+		);
+
+		analysisManager->FillH1(
+			fHPhotonArrivalTime,
+			arrivalTime_ns * CLHEP::ns
+		);
+
 		// kill according to PMT quantum efficiency
 		if (!pmt.IsPhotonDetected(energy)) 
 			return true;
 	}
+
+	// NEW:v10 Post-detection Histograms
+	analysisManager->FillH1(
+		fHPEWavelength,
+		wavelength_nm * CLHEP::nm
+	);
+
+	analysisManager->FillH1(
+		fHPEOpticalPath,
+		opticalPath_m * CLHEP::m
+	);
+
+	analysisManager->FillH1(
+		fHPEArrivalTime,
+		arrivalTime_ns * CLHEP::ns
+	);
 	
 	
 	DetectorSimData& detSimData = simData.GetDetectorSimData();

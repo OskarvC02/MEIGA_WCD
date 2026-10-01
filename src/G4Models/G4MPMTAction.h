@@ -32,6 +32,16 @@ class G4MPMTAction : public G4VSensitiveDetector {
     std::vector<double> fPETimeComp;
     std::vector<double> fPETimeMuDecay;
     // std::vector<std::vector<double>*>* fPETimeDistribution;
+
+    // NEW:v10
+    G4int fHPhotonWavelength = -1;
+    G4int fHPhotonOpticalPath = -1;
+    G4int fHPhotonWavelengthVsPath = -1;
+    G4int fHPhotonArrivalTime = -1;
+
+    G4int fHPEWavelength = -1;
+    G4int fHPEOpticalPath = -1;
+    G4int fHPEArrivalTime = -1;
 };
 
 

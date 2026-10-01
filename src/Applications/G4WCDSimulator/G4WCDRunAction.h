@@ -26,7 +26,11 @@ class G4WCDRunAction : public G4UserRunAction
 
     std::ofstream* outFile;
 
+    // Optical-analysis file management.
+    void OpenOpticalAnalysis(const G4String& fileName);
+    void WriteAndCloseOpticalAnalysis();
 
   private:
+    G4bool fOpticalFileOpen = false;
 };
 #endif 

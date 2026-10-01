@@ -175,6 +175,18 @@ G4WCDSimulator::RunSimulation(Event& theEvent)
 	// initialize G4 kernel
 	fRunManager->Initialize();
 
+	// -------------------------------------------------------------------------
+	// Initialize optical analysis for the COMPLETE simulation batch.
+	//
+	// Important: this application calls BeamOn(1) once per particle.
+	// Therefore the optical file must stay open across all BeamOn calls.
+	// -------------------------------------------------------------------------
+
+	const G4String opticalOutputFile =
+		cfg.fOutputFileName + "_optical.root";
+
+	fRunAction->OpenOpticalAnalysis(opticalOutputFile);
+
 	// initialize visualization
 	if ((cfg.fGeoVis || cfg.fTrajVis) && !fVisManager)
 		fVisManager = new G4VisExecutive;
@@ -234,6 +246,11 @@ G4WCDSimulator::RunSimulation(Event& theEvent)
 		fRunManager->BeamOn(1);
 	}
 
+	// -------------------------------------------------------------------------
+	// Finish optical analysis AFTER all particles have been simulated.
+	// -------------------------------------------------------------------------
+
+	fRunAction->WriteAndCloseOpticalAnalysis();
 
 	delete fVisManager;
 	delete fRunManager;
