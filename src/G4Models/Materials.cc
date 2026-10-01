@@ -852,7 +852,7 @@ Materials::CreateMaterials()
 	// Define different PropertiesTable for different water "types"
 	waterPT1 = new G4MaterialPropertiesTable();
     // NEW:v9 proper wavelength dependent refraction index
-	waterPT1->AddProperty("RINDEX", water1PhotonEnergy, water1RefIndex, 2);
+	waterPT1->AddProperty("RINDEX", water1PhotonEnergy, water1RefIndex, water1ArrEntries);
 	waterPT1->AddProperty("ABSLENGTH", water1PhotonEnergy, water1AbsLen, water1ArrEntries);
 	
 	// --- Material Properties Table from Geant4 OpNovice example.
