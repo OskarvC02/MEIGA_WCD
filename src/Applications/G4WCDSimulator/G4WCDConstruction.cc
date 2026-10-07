@@ -75,7 +75,7 @@ G4WCDConstruction::CreateGround()
 {
 	solidGround = new G4Box("Ground", fGroundSizeX/2, fGroundSizeY/2, fGroundSizeZ/2);
 	G4VisAttributes brown(G4Colour::Brown());
-	logicGround = new G4LogicalVolume(solidGround, Materials().StdRock, "Ground");
+	logicGround = new G4LogicalVolume(solidGround, Materials().DrySoil, "Ground");
 	logicGround->SetVisAttributes(brown);
 	physGround  =  new G4PVPlacement(nullptr, G4ThreeVector(0, 0, -fWorldSizeZ/2 + fGroundSizeZ/2), logicGround, "Ground", logicWorld, false, 0, fCheckOverlaps);
 }
