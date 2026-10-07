@@ -240,6 +240,25 @@ PrimaryGenerator::ComputeInjectionPosition(SimData &simData, std::vector<double>
       yInj = currentParticle.GetPosition().at(1);
       zInj = currentParticle.GetPosition().at(2);
       break;
+    // New Injection Mode: Inject equally distributed over the whole simulation area
+    case SimData::InjectionMode::eBoxUniform:
+    {
+        double injHeight = simData.GetInjectionHeight();
+        if (injHeight != z0){
+            cout << "[WARNING] PrimaryGenerator::ComputeInjectionPosition: in injectionMode = eCircle, `injHeight` does not match with `z-coordinate` of the circle. Using `injHeight` as default." << endl;
+        }
+
+        double randX = RandFlat::shoot(-0.5, 0.5);
+        double randY = RandFlat::shoot(-0.5, 0.5);
+        double x = randX * fEvent.GetDetector(0).GetGroundSizeX();
+        double y = randY * fEvent.GetDetector(0).GetGroundSizeY();
+
+        xInj = x + x0;
+        yInj = y + y0;
+        zInj = injHeight;
+
+        break;
+    }
     case SimData::InjectionMode::eUnknown:
     default:
         xInj = currentParticle.GetPosition().at(0);

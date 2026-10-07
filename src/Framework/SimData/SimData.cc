@@ -45,6 +45,8 @@ SimData::InjectionConversion(string name)
 		return SimData::InjectionMode::eHalfSphere;
 	else if (name == "eVertical")
 		return SimData::InjectionMode::eVertical;
+	else if (name == "eBoxUniform")
+		return SimData::InjectionMode::eBoxUniform;
 	else if (name == "eFromFile")
 		return SimData::InjectionMode::eFromFile;
 	else {

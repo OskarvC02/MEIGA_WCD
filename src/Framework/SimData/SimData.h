@@ -31,6 +31,7 @@ class SimData
 			eCircle = 1,
 			eHalfSphere = 2,
 			eVertical = 3,
+			eBoxUniform = 4,
 			eFromFile
 		};
 
