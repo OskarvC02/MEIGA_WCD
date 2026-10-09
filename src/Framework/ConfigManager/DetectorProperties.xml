@@ -27,6 +27,8 @@
 	<groundSizeY unit="m"> 5 </groundSizeY>
 	<groundSizeZ unit="m"> 1 </groundSizeZ>
 
+    <humidity> 0 </humidity>
+
 	<shieldRadius unit="cm"> 56.4 </shieldRadius>
 	<shieldThickness unit="cm"> 0 </shieldThickness>
 

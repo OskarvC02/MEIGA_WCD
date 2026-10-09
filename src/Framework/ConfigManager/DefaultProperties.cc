@@ -53,4 +53,6 @@ DefaultProperties::SetDefaultProperties()
 	gShieldRadius = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "shieldRadius");
 	gShieldThickness = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "shieldThickness");
 
+	// Soil Humidity
+	gHumidity = ConfigManager::GetPropertyFromXML<double>(tree, branchName, "humidity");
 }

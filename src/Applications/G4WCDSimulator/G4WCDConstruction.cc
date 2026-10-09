@@ -36,6 +36,10 @@ G4WCDConstruction::G4WCDConstruction(Event& theEvent) :
 	G4cout << "[DEBUG] WorldSizeX = " << fWorldSizeX / CLHEP::m << " m" << G4endl;
 	G4cout << "[DEBUG] WorldSizeY = " << fWorldSizeY / CLHEP::m << " m" << G4endl;
 	G4cout << "[DEBUG] WorldSizeZ = " << fWorldSizeZ / CLHEP::m << " m" << G4endl;
+
+	// NEW Soil Moisture (experimental, untested)
+	fHumidity = fEvent.GetDetector(0).GetHumidity();
+	Materials.CreateWetSoil(fHumidity)
 }
 
 G4WCDConstruction::~G4WCDConstruction() 

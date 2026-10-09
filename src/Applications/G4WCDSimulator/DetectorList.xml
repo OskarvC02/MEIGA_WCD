@@ -24,6 +24,8 @@
 			<groundSizeX unit="m"> 400 </groundSizeX>
 			<groundSizeY unit="m"> 400 </groundSizeY>
 			<groundSizeZ unit="m"> 1 </groundSizeZ>
+                        
+            <humidity> 0 </humidity>
 
 			<shieldThickness unit="cm"> 0 </shieldThickness> 
         </detector>

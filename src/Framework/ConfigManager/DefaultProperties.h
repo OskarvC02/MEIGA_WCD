@@ -37,7 +37,8 @@ struct DefaultProperties
 	double gGroundSizeZ;
 	// fraction of impurities for detectors in water
 	double gImpuritiesFraction;
-
+	// NEW Soil Humidity (fraction)
+	double gHumidity;
 	// NEW:v6 lead Shield 
 	double gShieldRadius;
 	double gShieldThickness;

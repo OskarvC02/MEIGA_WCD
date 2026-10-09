@@ -698,6 +698,7 @@ G4Material* Materials::Oil;
 G4Material* Materials::Alum;
 
 G4Material* Materials::DrySoil; // NEW:v3 Soil with arxiv.org/html/2601.17595v1 composition
+G4Material* Materials::WetSoil;
 G4Material* Materials::Vacuum;  // NEW:v4 For the universe Box
 
 G4OpticalSurface* Materials::ScinOptSurf;
@@ -1364,6 +1365,48 @@ void Materials::CreateSaltyWater(const double massFraction)
         << massFraction
         << ", density = "
         << density
+        << " g/cm3"
+        << G4endl;
+}
+
+// Constructs the Material WetSoil from the passed volumetric Mass Fraction
+void Materials::CreateWetSoil(const double thetaV)
+{
+    const G4double rhoDry = 1.45 * g/cm3;
+    const G4double rhoWater = 1.0 * g/cm3;
+    const G4double rhoParticle = 2.7 * g/cm3;
+
+    const G4double porosity = 1.0 - rhoDry / rhoParticle;
+
+    if (thetaV < 0.0 || thetaV > porosity)
+    {
+        G4Exception("DetectorConstruction",
+                    "InvalidSoilMoisture",
+                    FatalException,
+                    "Volumetric water content exceeds soil porosity.");
+    }
+
+    const G4double rhoWet = rhoDry + thetaV * rhoWater;
+
+    const G4double waterMassFraction =
+        thetaV * rhoWater / rhoWet;
+
+    const G4double drySoilMassFraction =
+        rhoDry / rhoWet;
+
+    WetSoil = new G4Material("WetSoil", rhoWet, 2);
+
+    WetSoil->AddMaterial(Materials().Water,   waterMassFraction);
+    WetSoil->AddMaterial(Materials().DrySoil, drySoilMassFraction);
+
+    // Debugging
+    G4cout
+        << "[WetSoil] Volumetric Humidity = "
+        << thetaV
+        << ", Water mass fraction = "
+        << waterMassFraction
+        << ", density = "
+        << rhoWet/(g/cm3)
         << " g/cm3"
         << G4endl;
 }

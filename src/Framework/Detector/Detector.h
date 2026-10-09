@@ -140,6 +140,10 @@ class Detector
 		double GetShieldThickness() const { return fShieldThickness; }
 		void SetShieldThickness(double t) { fShieldThickness = t; }
 
+		// NEW:v6 Humidity
+		double GetHumidity() const { return fHumidity; }
+		void SetHumidity(double h) { fHumidity = h; }
+
 		// Optical device
 		//OptDevice& GetOptDevice() { return fOptDevice; } // to access OptDevice class members
 		// Make, Get and Has optical device by its id
@@ -203,6 +207,8 @@ class Detector
 		// NEW:v6 Lead Shield
 		double fShieldThickness;
 		double fShieldRadius;
+
+		double fHumidity;
 
 		std::vector<double> fDetectorPosition;
 		OptDevice fOptDevice;

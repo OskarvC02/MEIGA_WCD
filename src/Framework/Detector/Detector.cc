@@ -170,6 +170,9 @@ Detector::SetDetectorProperties(const ptree &tree, DefaultProperties &defProp)
 	SetShieldRadius(defProp.gShieldRadius);
 	SetShieldThickness(defProp.gShieldThickness);
 
+	// NEW Soil Humidity
+	SetHumidity(def.Prop.gHumidity);
+
 	/*
 		Now that the default properties are set, look for a property
 		in the DetectorList.xml and override in case of exist. 
@@ -296,6 +299,10 @@ Detector::SetDetectorProperties(const ptree &tree, DefaultProperties &defProp)
 				double value = stod(xmlValue);
 				double unit = G4UnitDefinition::GetValueOf(v.second.get<string>("<xmlattr>.unit"));
 				SetShieldThickness(value * unit);
+			}
+			else if (xmlLabel == "humidity") {
+				double value = stod(xmlValue);
+				SetHumidity(value);
 			}
 		}
 	}
