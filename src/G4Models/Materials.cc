@@ -152,6 +152,24 @@ static G4double water1RefIndex[] = {
     1.34307799, 1.34405887, 1.34507114, 1.3462489,  1.34746959, 1.34873495,
     1.35019557, 1.35187178, 1.35362446, 1.35579992, 1.35809498, 1.36051753};
 
+// NEW:v9.3 ----------------- Other Pure Water Absorption Length Baselines ---------------------
+
+static G4double waterAbsLenSegelstein[] = {
+    6.02898152*m, 12.26201178*m, 14.08678362*m, 16.31310191*m, 18.69527541*m,
+    22.59955222*m, 25.29733514*m, 28.69420553*m, 38.11820347*m, 49.53873482*m,
+    53.92989806*m, 53.81784146*m, 49.28056109*m, 46.72161732*m, 40.59132317*m,
+    34.31307101*m, 28.90558682*m, 24.54368539*m, 21.76055588*m, 18.79141178*m,
+    16.71601076*m, 14.62821379*m, 13.07394596*m, 11.73134035*m, 10.38726107*m,
+    9.25729176*m,  8.41911411*m,  7.52046975*m,  6.31917589*m,  5.34226931*m};
+
+static G4double waterAbsLenMason[] = {
+    5.64196074*m,    13.22880032*m,   15.25982766*m,   16.66966484*m,   19.0765056*m,  
+    22.43476969*m,   24.60089735*m,   26.61942175*m,   41.25264541*m,   56.50603663*m,
+    76.89923484*m,   89.33781577*m,   104.2496317 *m,  114.18764423*m,  156.8308357 *m, 
+    232.80749061*m,  298.67025183*m,  353.85489661*m,  394.91503094*m,  527.58508525*m,
+    653.32982149*m,  768.49564366*m,  831.06270256*m,  1024.32375692*m, 1224.33100662*m,
+    1033.33149417*m, 835.52137909*m,  549.94815117*m,  293.04442048*m,  162.47219342*m};
+
 // NEW:v9 ------------------- SaltyWater -----------------------
 
 // Salty water optical buffer (lives for program duration, outlives MPT)
@@ -1316,9 +1334,7 @@ void Materials::CreateSaltyWater(const double massFraction)
             "Materials::CreateSaltyWater",
             "Mat004",
             FatalException,
-            "SaltyWater already exists. "
-            "Create each salinity as a separate material instead of "
-            "deleting and recreating an existing G4Material."
+            "SaltyWater already exists. Do not try to define it twice"
         );
     }
 
