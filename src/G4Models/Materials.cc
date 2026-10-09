@@ -892,7 +892,8 @@ Materials::CreateMaterials()
 	StdRock = SiO2;
 
 	// NEW:v3 Chemical Composition Dry Colombian Soil
-	DrySoil = new G4Material("DrySoil", 2.7 *g/cm3, 14);
+    // 2.7 g/cm3 was likely the grain density. Soils are porous, so a more realistic choice is 1.45 g/cm3
+	DrySoil = new G4Material("DrySoil", 1.45*g/cm3, 14);
 	DrySoil->AddElement(elO, 0.49);
 	DrySoil->AddElement(elSi, 0.33);
 	DrySoil->AddElement(elAl, 0.0713);
