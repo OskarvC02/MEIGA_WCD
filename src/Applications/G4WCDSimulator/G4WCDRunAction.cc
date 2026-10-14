@@ -74,7 +74,7 @@ G4WCDRunAction::G4WCDRunAction()
       kPhotonWavelengthVsPath,
       "Photon wavelength vs optical path at PMT",
       90,
-      250.0 * CLHEP::mm,
+      250.0 * CLHEP::nm,
       700.0 * CLHEP::nm,
       100,
       0.0 * CLHEP::m,
