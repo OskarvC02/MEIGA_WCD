@@ -1275,7 +1275,7 @@ void Materials::CreateSaltyWater(const double massFraction)
 
     // Debug outputs
 
-    G4out<<G4endl;
+    G4cout<<G4endl;
     G4cout<< "[DEBUG] Salty Water RINDEX = "<< G4endl;
     for (G4int i = 0; i < water1ArrEntries; ++i) {
         G4cout<< saltyWaterRefIndex[i] << " ";
@@ -1284,7 +1284,7 @@ void Materials::CreateSaltyWater(const double massFraction)
         }      
     }
 
-    G4out<<G4endl;
+    G4cout<<G4endl;
     G4cout<< "[DEBUG] Salty Water ABSLEN = "<< G4endl;
     for (G4int i = 0; i < water1ArrEntries; ++i) {
         G4cout<< saltyWaterAbsLen[i] << " ";
@@ -1292,7 +1292,7 @@ void Materials::CreateSaltyWater(const double massFraction)
             G4cout << G4endl;
         }      
     }
-    G4out<<G4endl;
+    G4cout<<G4endl;
 
     
     // -------------------------------------------------------------------------
