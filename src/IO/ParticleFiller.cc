@@ -116,12 +116,12 @@ ParticleFiller::FillParticleVector(const std::string &fileName, Event& theEvent)
 
     */
     
-    x *= cm;
-    y *= cm;
+    x *= m;
+    y *= m;
     px *= GeV;
     py *= GeV;
     pz *= GeV;
-    z *= cm;
+    z *= m;
     primaryEnergy *= GeV;
     primaryTheta *= deg;
     primaryPhi *= deg;
