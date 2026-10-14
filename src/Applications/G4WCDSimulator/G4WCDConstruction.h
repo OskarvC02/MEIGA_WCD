@@ -85,6 +85,9 @@ class G4WCDConstruction : public G4VUserDetectorConstruction {
 		// NEW:v3 Margin between universe and world
 		G4double fUniverseMargin = 20 * CLHEP::m;
 
+		// Volumetric Humidity Fraction
+		G4double fHumidity = 0; 
+
 		Event& fEvent;
 };
 

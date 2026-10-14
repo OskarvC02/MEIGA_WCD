@@ -56,7 +56,7 @@ G4WCDRunAction::G4WCDRunAction()
       kPhotonWavelength,
       "Wavelength of optical photons reaching the PMT",
       90,              // 5 nm bins
-      250.0 CLHEP::nm,
+      250.0 * CLHEP::nm,
       700.0 * CLHEP::nm,
       "nm"
   );
@@ -87,7 +87,7 @@ G4WCDRunAction::G4WCDRunAction()
       kPhotonArrivalTime,
       "Arrival time of optical photons at the PMT",
       200,
-      0.0 CLHEP::ns,
+      0.0 * CLHEP::ns,
       1000.0 * CLHEP::ns,
       "ns"
   );

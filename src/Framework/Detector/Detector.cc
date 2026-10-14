@@ -171,7 +171,7 @@ Detector::SetDetectorProperties(const ptree &tree, DefaultProperties &defProp)
 	SetShieldThickness(defProp.gShieldThickness);
 
 	// NEW Soil Humidity
-	SetHumidity(def.Prop.gHumidity);
+	SetHumidity(defProp.gHumidity);
 
 	/*
 		Now that the default properties are set, look for a property
