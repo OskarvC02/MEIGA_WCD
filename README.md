@@ -1,5 +1,18 @@
 # MEIGA_WCD
 
+## Table of Contents
+
+- [1. Overview and scope](#1-overview-and-scope)
+- [2. The two WCD implementations](#2-the-two-wcd-implementations)
+- [3. Repository structure](#3-repository-structure)
+- [4. Configuration and simulation workflow](#4-configuration-and-simulation-workflow)
+- [5. Detector and environment geometry](#5-detector-and-environment-geometry)
+- [6. Particle injection](#6-particle-injection)
+- [7. Periodic boundary conditions: the “Pacman” implementation](#7-periodic-boundary-conditions-the-pacman-implementation)
+- [8. Water material models](#8-water-material-models)
+- [9. Soil composition, granular model, and humidity](#9-soil-composition-granular-model-and-humidity)
+- [10. Optical diagnostics and analysis](#10-optical-diagnostics-and-analysis)
+
 ## 1. Overview and scope
 
 This repository contains a Geant4-based simulation of a water-Cherenkov detector (WCD), built on the MEIGA simulation framework. The project focuses on adapting the detector simulation for studies involving cosmic-ray neutron sensing (CRNS), soil properties, and the optical response of water containing different concentrations of sodium chloride (NaCl).
@@ -60,7 +73,7 @@ The runtime configuration files are also located under `src/Applications/G4WCDSi
 
 ## 4. Configuration and simulation workflow
 
-A simulation run is controlled through two configuration files: a JSON file for general run settings and an XML file for detector and injection settings.
+The primary run-specific configuration is split between `G4WCDSimulator.json`, which controls general simulation settings, and `DetectorList.xml`, which supplies detector and injection parameters. MEIGA also reads `src/Framework/ConfigManager/DetectorProperties.xml` to initialize framework defaults; values supplied for individual detectors in `DetectorList.xml` override the corresponding defaults.
 
 **The files under `src/` are templates. They are not automatically the files read by an already-built executable.**
 
@@ -80,7 +93,7 @@ This distinction matters in practice:
 - **To adjust the configuration of an existing build**, edit the corresponding files in `build/Applications/G4WCDSimulator/`.
 - **To change the version maintained in the repository**, edit the templates under `src/Applications/G4WCDSimulator/` and ensure the updated files are copied into the build directory before running the simulation.
 
-Changing a template does not, by itself, change a configuration file that is already present in the build directory. Neither is it necessary to change the template file for every small simulation specific paramater modification.
+Changing a template does not, by itself, change a configuration file that is already present in the build directory. Neither is it necessary to change the template file for every small simulation-specific paramater modification.
 
 ### The JSON configuration
 
@@ -182,7 +195,7 @@ The JSON setting `Input.Mode` accepts two values:
 - **`UseARTI`** reads a shower archive from an ASCII `.shw` file. This is the mode used for the CRNS studies, because it supplies the particle mixture and momenta from an air shower.
 - **`UseEcoMug`** generates muons using the EcoMug library. It does not reproduce the full particle mixture from an ARTI shower and is therefore suited to muon-focused studies rather than the full cosmic-ray shower input used here.
 
-For `UseARTI`, `ParticleFiller.cc` reads the archive and converts each record into a simulation particle. The supplied sample archive specifies the following **12-column** format:
+For `UseARTI`, `src/IO/ParticleFiller.cc` reads the archive and converts each record into a simulation particle. The supplied sample archive specifies the following **12-column** format:
 
 |Column |Quantity |Units|
 |----|----|----|
@@ -197,7 +210,7 @@ For `UseARTI`, `ParticleFiller.cc` reads the archive and converts each record in
 
 The coordinates are provided in metres, momentum and primary energy in GeV, and primary angles in degrees. The particle ID uses the CORSIKA convention, which is converted to the particle encoding used by the simulation. The reader converts the corresponding values into Geant4 units.
 
-Unit check: ARTI’s showers.cc converts the input position coordinates from centimetres (CORSIKA-internal) to metres before writing the .shw file. Verify this convention against the specific ARTI version used to generate your archive.
+Unit check: ARTI’s [showers.cc](https://github.com/lagoproject/arti/blob/6741b79407d415a571012c77585d830d0eea361d/analysis/showers.cc#L585-L598) converts the input position coordinates from centimetres (CORSIKA-internal) to metres before writing the .shw file. Verify this convention against the specific ARTI version used to generate your archive.
 
 The archive's momentum $p_z$ component is sign-inverted when the particle is read. This accounts for the difference between the vertical-coordinate conventions used by the input and the Geant4 simulation. The horizontal momentum components are retained. The later injection-mode handling either preserves this converted direction or replaces it with a vertical downward direction.
 
@@ -212,7 +225,7 @@ The current implementation supports the following modes:
 | `eCircle` | Places particles at a fixed injection height, sampled uniformly over a circular disk around the configured origin. The momentum direction from the ARTI record is retained. |
 | `eHalfSphere` | Samples injection positions on a hemisphere around the configured origin, with the radius and angular range controlled by the XML settings. |
 | `eVertical` | Places particles at the configured injection origin and forces their direction vertically downward, along $-z$. For ARTI input, the particle identity and momentum magnitude are retained. |
-| `eFromFile` | Uses the particle position from the input record rather than generating a new injection position. |
+| `eFromFile` | Uses the particle position from the input record rather than generating a new injection position. When using this mode, ensure that the coordinate systems of ARTI and MEIGA are compatible in the specific simulation setup. |
 | `eBoxUniform` | Places particles at a fixed injection height and samples their $x$ and $y$ positions uniformly over a rectangular area defined by the configured ground dimensions, centred on the injection origin. |
 
 For the circular mode, the radius is sampled so that positions are uniform in disk area rather than uniform in radius. The half-sphere mode samples directions using a uniform distribution in $\cos\theta$, appropriate for uniform sampling over the spherical surface within the configured angular limits.
@@ -290,13 +303,13 @@ $
 
 The expression for $R$ depends on wavelength, temperature, and density. The current table of refractive-index values is calculated for the wavelength grid used by the detector’s optical model. See the [IAPWS release on the refractive index of ordinary water](https://iapws.org/relguide/Rindex.pdf) for the underlying formulation.
 
-The absorption length $L_{\mathrm{abs,w}}(\lambda)$ is supplied separately as a tabulated spectrum. The currently selected `water1AbsLen` array was inherited from the Pierre Auger Offline Framework; the original data provenance is not fully established in this repository. Alternative tables based on data by [Segelstein (1981)](http://hdl.handle.net/10355/11599) and [Mason and Fry (2017)](https://doi.org/10.1364/AO.55.007163) are also present in `Materials.cc`. These alternatives are not simply interchangeable labels: their differing absorption lengths can change how far Cherenkov photons travel before absorption and therefore affect the predicted photoelectron signal.
+The absorption length $L_{\mathrm{abs,w}}(\lambda)$ is supplied separately as a tabulated spectrum. The currently selected `water1AbsLen` array was inherited from the Pierre Auger Offline Framework; the original data provenance is not fully established in this repository. Alternative tables based on data by [Segelstein (1981)](http://hdl.handle.net/10355/11599) and [Mason, Cone and Fry (2016)](https://doi.org/10.1364/AO.55.007163) are also present in `Materials.cc`. These alternatives are not simply interchangeable labels: their differing absorption lengths can change how far Cherenkov photons travel before absorption and therefore affect the predicted photoelectron signal.
 
 The pure-water absorption table is selected in the source code rather than through a run-time configuration option. When comparing baselines, change the selected table deliberately and keep other simulation settings fixed. Record which baseline was used for each run so that differences can be attributed to the optical input rather than to unrelated configuration changes.
 
 ### 8.2 Saline water
 
-The saline-water material is constructed by `Materials::CreateSaltyWater(massFraction)`. The input $w$ is the NaCl **mass fraction**, so, for example, $w=0.10$ represents a solution containing 10% NaCl by mass. The implementation accepts values between zero and one.
+The saline-water material is constructed by `Materials::CreateSaltyWater(massFraction)`. The input $w$ is the NaCl **mass fraction**, so, for example, $w=0.10$ represents a solution containing 10% NaCl by mass. Although the implementation accepts NaCl mass fractions from 0 to 1, the density fit is based on data only up to approximately the saturation mass fraction, $w \simeq 0.26$. Values beyond that range are extrapolations and should not be treated as physically validated saline-water solutions.
 
 The solution density is parameterized as
 
@@ -363,7 +376,9 @@ The elemental mass fractions for `DrySoil` are based on the soil composition rep
 | H | 0.38 | N | 0.10 |
 | S | 0.08 | P | 0.09 |
 
-These are mass fractions of the soil material, not volume percentages of separate mineral grains. They are entered as element fractions in the `G4Material` definition. The source values and their sum should be kept consistent when editing the material.
+Note that the table in the quoted source contains a typography error for the fraction of Phosphorus (P). The value denoted here in the table is the correct one.
+
+These are mass fractions of the soil material, not volume percentages of separate mineral grains. They are entered as element fractions in the `G4Material` definition. The source values and their sum should be kept consistent when editing the material. 
 
 The cited paper uses a reference dry-soil density of $2700\ \mathrm{kg\,m^{-3}}$, equivalent to $2.7\ \mathrm{g\,cm^{-3}}$. In this repository, that value is interpreted as an effective **grain or particle density** for estimating the solid fraction of a porous soil. It is not used directly as the density of the simulated bulk soil.
 
@@ -449,10 +464,12 @@ The current diagnostics include distributions of optical-photon wavelength, path
 
 The simulation mode determines how optical photons are handled:
 
-- **`eFast`** uses a faster detection treatment. Photons are tested against the PMT detection probability; photons that are not detected are removed rather than tracked through the full optical transport process. This mode is useful for producing detector-response distributions efficiently, but it limits which diagnostics can be collected for photons that never produce a photoelectron.
-- **`eFull`** tracks optical photons through the optical processes enabled in the physics list. It supports more detailed transport diagnostics, including distributions of photons reaching the PMT before the detection decision. It is computationally more expensive.
+- **`eFast`** uses a faster detection treatment. Newly generated optical photons are tested against the wavelength-dependent PMT detection probability immediately after creation. Photons rejected by this test are removed before optical transport; accepted photons are tracked normally. This can substantially reduce computation time.
+- **`eFull`** tracks all optical photons through the optical processes enabled in the physics list. The PMT detection test is performed when a photon reaches the PMT, making this mode more computationally expensive.
 
-Although the charge response of both modes is identical, the modes should not be assumed to produce interchangeable diagnostic information. In particular, histograms of detected photoelectrons do not describe the complete population of photons that reached or interacted with the PMT. When analysing absorption, path length, or losses before detection, confirm that the selected mode actually records the required population.
+Assuming that photons preserve their wavelength during transport, moving the PMT detection test from the PMT to the point of photon creation is expected to give a statistically equivalent photoelectron response. In both modes, accepted photons must still reach the PMT to contribute to the detected signal. This equivalence may not hold if wavelength-changing processes affect the photons during transport.
+
+The two modes do, however, provide different diagnostic information. In `eFast`, photons rejected at creation are never transported, so the full population of photons reaching the PMT cannot be studied. The incoming-photon wavelength, path-length, and arrival-time histograms are therefore only available in `eFull`. The photoelectron-associated histograms are available in both modes, but describe the detected population rather than all photons reaching the PMT. When studying optical transport, absorption, or losses before detection, ensure that the selected mode records the population relevant to the analysis.
 
 ### 10.2 Extending the diagnostics
 
