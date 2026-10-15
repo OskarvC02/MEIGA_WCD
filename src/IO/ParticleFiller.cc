@@ -105,7 +105,7 @@ ParticleFiller::FillParticleVector(const std::string &fileName, Event& theEvent)
 			G4 system of units to avoid re-conversions
 
 			input is given in CORSIKA units, i.e.,
-			[x] = cm
+			[x] = m (CORSIKA Unit is cm but ARTI converts before writing)
 			[p, E] = GeV
 			[theta, phi] = deg
 			
